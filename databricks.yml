@@ -1,0 +1,19 @@
+# This is a Databricks asset bundle definition for marvelous-databricks-course-koenkoopen.
+# The Databricks extension requires databricks.yml configuration file.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+
+bundle:
+  name: marvelous-databricks-course-koenkoopen
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-2827555741900729.9.azuredatabricks.net
+
+  ## Optionally, there could be 'staging' or 'prod' targets here.
+  #
+  # prod:
+  #   workspace:
+  #     host: https://adb-2827555741900729.9.azuredatabricks.net

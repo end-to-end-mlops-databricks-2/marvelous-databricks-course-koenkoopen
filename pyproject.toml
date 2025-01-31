@@ -1,5 +1,5 @@
 [project]
-name = "housing-price"
+name = "koen_databricks_mlops"
 version = "0.0.1"
 description = "Housing prices project"
 requires-python = ">=3.11, <3.12"
@@ -33,10 +33,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where =["src"]
-include = ["house_price*"]
+include = ["src*"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
 select = [
     "F",  # pyflakes rules
     "E",  # pycodestyle error rules
