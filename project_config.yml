@@ -39,6 +39,7 @@ columns_to_drop:
   - room_type_reserved_Room_Type 5
   - type_of_meal_plan_Not Selected
   - type_of_meal_plan_Meal Plan 3
+  - Booking_ID
 
 target: booking_status
 

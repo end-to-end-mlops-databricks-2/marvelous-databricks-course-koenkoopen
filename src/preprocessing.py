@@ -44,6 +44,30 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error while converting numerical features: {e}")
 
+        # Handle missing values and convert data types as needed
+        self.df.fillna(
+            {
+                "no_of_adults": self.df["no_of_adults"].mean(),
+                "no_of_children": "None",
+                "no_of_weekend_nights": 0,
+                "no_of_week_nights": 0,
+                "required_car_parking_space": 0,
+                "lead_time": self.df["lead_time"].mean(),
+                "arrival_year": "None",
+                "arrival_month": "None",
+                "arrival_date": "None",
+                "repeated_guest": 0,
+                "no_of_previous_cancellations": 0,
+                "no_of_previous_bookings_not_canceled": 0,
+                "avg_price_per_room": self.df["avg_price_per_room"].mean(),
+                "no_of_special_requests": 0,
+                "type_of_meal_plan": "None",
+                "room_type_reserved": "None",
+                "market_segment_type": "None"
+            },
+            inplace=True,
+        )
+
         try:
             # Convert categorical features to the appropriate type
             cat_features = self.config.cat_features
@@ -57,7 +81,9 @@ class DataProcessor:
 
         # Extract target and relevant features
         target = self.config.target
-        relevant_columns = cat_features + num_features + [target]
+        relevant_columns = cat_features + num_features + [target] + ["Booking_ID"]
+        self.df = self.df[relevant_columns]
+        self.df["Booking_ID"] = self.df["Booking_ID"].astype("str")
 
         self.df = self.df[relevant_columns]
         self.compute_quarters("arrival_month")
@@ -75,7 +101,7 @@ class DataProcessor:
         """
         try:
             logger.info(f"Computing quarters based on {month_column}...")
-            self.df["quarter"] = self.df[month_column].apply(lambda x: f"Q{x // 3 + 1}")
+            self.df["quarter"] = self.df[month_column].apply(lambda x: f"Q{x // 3}")
         except KeyError as e:
             logger.error(f"Column {month_column} does not exist in the DataFrame: {e}")
         except Exception as e:
@@ -121,6 +147,9 @@ class DataProcessor:
         Args:
             test_size (float): The proportion of the dataset to include in the test set.
             random_state (int): The seed used by the random number generator.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: A tuple containing the training and test sets.
         """
         logger.info(f"Splitting data into training and test sets (test_size={test_size})...")
         try:

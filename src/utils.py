@@ -11,6 +11,10 @@ import pandas as pd
 def configure_logging(name, log_file_path=None):
     """Configures the logging module for a given module.
 
+    Args:
+        name (str): The name of the module.
+        log_file_path (str, optional): The path to the log file. Defaults to None.
+
     Returns:
         logger: The configured logger.
     """
