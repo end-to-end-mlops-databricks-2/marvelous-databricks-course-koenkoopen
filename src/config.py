@@ -1,4 +1,5 @@
 """Module to define and load project configuration."""
+
 from typing import Any, Dict, List
 
 import yaml
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 
 class ProjectConfig(BaseModel):
     """Project configuration class."""
+
     num_features: List[str]
     cat_features: List[str]
     one_hot_encode_cols: List[str]
@@ -19,7 +21,7 @@ class ProjectConfig(BaseModel):
     @classmethod
     def from_yaml(cls, config_path: str):
         """Load configuration from a YAML file.
-        
+
         Args:
             config_path (str): Path to the YAML file.
 

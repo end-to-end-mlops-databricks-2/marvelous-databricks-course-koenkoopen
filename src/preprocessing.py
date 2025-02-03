@@ -43,7 +43,7 @@ class DataProcessor:
                     self.df[col] = pd.to_numeric(self.df[col], errors="coerce")
         except Exception as e:
             logger.error(f"Unexpected error while converting numerical features: {e}")
-            raise Exception(f"Unexpected error while converting numerical features: {e}")
+            raise Exception(f"Unexpected error while converting numerical features: {e}") from e
 
         # Handle missing values and convert data types as needed
         self.df.fillna(
@@ -64,7 +64,7 @@ class DataProcessor:
                 "no_of_special_requests": 0,
                 "type_of_meal_plan": "None",
                 "room_type_reserved": "None",
-                "market_segment_type": "None"
+                "market_segment_type": "None",
             },
             inplace=True,
         )
@@ -79,7 +79,7 @@ class DataProcessor:
                     self.df[cat_col] = self.df[cat_col].astype("category")
         except Exception as e:
             logger.error(f"Unexpected error while converting categorical features: {e}")
-            raise Exception(f"Unexpected error while converting categorical features: {e}")
+            raise Exception(f"Unexpected error while converting categorical features: {e}") from e
 
         # Extract target and relevant features
         target = self.config.target
@@ -94,7 +94,7 @@ class DataProcessor:
         self.scale_numeric_features()
         self.label_encode()
         self.df = self.df.drop(self.config.columns_to_drop, axis=1)
-        self.df.columns = self.df.columns.str.replace(' ', '_')
+        self.df.columns = self.df.columns.str.replace(" ", "_")
 
     def compute_quarters(self, month_column: str = "arrival_month"):
         """Compute the quarter column based on the month column.
@@ -107,10 +107,12 @@ class DataProcessor:
             self.df["quarter"] = self.df[month_column].apply(lambda x: f"Q{x // 3}")
         except KeyError as e:
             logger.error(f"While computing quarters, the column {month_column} does not exist in the DataFrame: {e}")
-            raise KeyError(f"While computing quarters, the column {month_column} does not exist in the DataFrame: {e}")
+            raise KeyError(
+                f"While computing quarters, the column {month_column} does not exist in the DataFrame: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error occurred while computing quarters: {e}")
-            raise Exception(f"Unexpected error occurred while computing quarters: {e}")
+            raise Exception(f"Unexpected error occurred while computing quarters: {e}") from e
 
     def one_hot_encode(self):
         """One hot encodes the categorical features."""
@@ -120,10 +122,10 @@ class DataProcessor:
             self.df = pd.get_dummies(self.df, columns=one_hot_encode_cols, drop_first=True, dtype=int)
         except KeyError as e:
             logger.error(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}")
-            raise KeyError(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}")
+            raise KeyError(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error occurred while one hot encoding: {e}")
-            raise Exception(f"Unexpected error occurred while one hot encoding: {e}")
+            raise Exception(f"Unexpected error occurred while one hot encoding: {e}") from e
 
     def label_encode(self):
         """Label encode the target variable."""
@@ -134,10 +136,10 @@ class DataProcessor:
             self.df[target_column] = encoder.fit_transform(self.df[target_column])
         except KeyError as e:
             logger.error(f"Target column {target_column} does not exist in the DataFrame: {e}")
-            raise KeyError(f"Target column {target_column} does not exist in the DataFrame: {e}")
+            raise KeyError(f"Target column {target_column} does not exist in the DataFrame: {e}") from e
         except Exception as e:
             logger.error(f"Unexpected error occurred while label encoding: {e}")
-            raise Exception(f"Unexpected error occurred while label encoding: {e}")
+            raise Exception(f"Unexpected error occurred while label encoding: {e}") from e
 
     def scale_numeric_features(self):
         """Scale the numeric features using the MinMaxScaler."""
@@ -147,11 +149,15 @@ class DataProcessor:
             scaler = MinMaxScaler()
             self.df[num_features] = scaler.fit_transform(self.df[num_features])
         except KeyError as e:
-            logger.error(f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}")
-            raise KeyError(f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}")
+            logger.error(
+                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
+            )
+            raise KeyError(
+                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error occurred while scaling numeric features: {e}")
-            raise Exception(f"Unexpected error occurred while scaling numeric features: {e}")
+            raise Exception(f"Unexpected error occurred while scaling numeric features: {e}") from e
 
     def split_data(self, test_size=0.2, random_state=42) -> Tuple[np.ndarray, np.ndarray]:
         """Split the DataFrame (self.df) into training and test sets.
@@ -168,7 +174,7 @@ class DataProcessor:
             train_set, test_set = train_test_split(self.df, test_size=test_size, random_state=random_state)
         except Exception as e:
             logger.error(f"Unexpected error occurred while splitting data: {e}")
-            raise Exception(f"Unexpected error occurred while splitting data: {e}")
+            raise Exception(f"Unexpected error occurred while splitting data: {e}") from e
         return train_set, test_set
 
     def save_to_catalog(self, df: pd.DataFrame, spark: SparkSession, table_name: str):
@@ -184,8 +190,7 @@ class DataProcessor:
             catalog_dest = f"{self.config.catalog_name}.{self.config.schema_name}.{table_name}"
 
             spark_df = spark.createDataFrame(df).withColumn(
-                "update_timestamp_utc",
-                to_utc_timestamp(current_timestamp(), "UTC")
+                "update_timestamp_utc", to_utc_timestamp(current_timestamp(), "UTC")
             )
 
             spark_df.write.mode("append").saveAsTable(catalog_dest)
@@ -198,4 +203,4 @@ class DataProcessor:
             )
         except Exception as e:
             logger.error(f"Unexpected error occurred while saving to Databricks tables: {e}")
-            raise Exception(f"Unexpected error occurred while saving to Databricks tables: {e}")
+            raise Exception(f"Unexpected error occurred while saving to Databricks tables: {e}") from e
