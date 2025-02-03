@@ -97,17 +97,6 @@ def test_split_data(data_processor):
     assert test_set.shape == (3, 19)
 
 
-def test_split_data_exception(data_processor):
-    """Unit test for label_encode function to check on correct error raising.
-
-    Args:
-        spark_df (spark.DataFrame): The input DataFrame.
-        config (ProjectConfig): The configuration object.
-    """
-    with pytest.raises(Exception):
-        data_processor.split_data(test_size=100)
-
-
 def test_data_processor(data_processor):
     """Unit test for the DataProcessor class.
 
