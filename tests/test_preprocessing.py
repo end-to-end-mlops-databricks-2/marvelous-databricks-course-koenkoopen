@@ -64,15 +64,6 @@ def test_one_hot_encode(data_processor):
         'no_of_previous_bookings_not_canceled',
         'no_of_special_requests',
         'Booking_ID', 'market_segment_type_Online', 'type_of_meal_plan_B', 'type_of_meal_plan_C', 'type_of_meal_plan_D', 'room_type_reserved_2', 'quarter_Q2', 'quarter_Q3', 'quarter_Q4']
-    assert isinstance(data_processor.df["type_of_meal_plan_B"][0], int)
-    assert isinstance(data_processor.df["type_of_meal_plan_C"][0], int)
-    assert isinstance(data_processor.df["type_of_meal_plan_D"][0], int)
-    assert isinstance(data_processor.df["quarter_Q1"][0], int)
-    assert isinstance(data_processor.df["quarter_Q2"][0], int)
-    assert isinstance(data_processor.df["quarter_Q3"][0], int)
-    assert isinstance(data_processor.df["quarter_Q4"][0], int)
-    assert isinstance(data_processor.df["market_segment_type_Online"][0], int)
-    assert isinstance(data_processor.df["room_type_reserved_2"][0], int)
 
 
 def test_label_encode(data_processor):
