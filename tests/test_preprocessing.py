@@ -36,7 +36,7 @@ def test_compute_quarters_error(data_processor):
         data_processor (DataProcessor): The DataProcessor object.
     """
     with pytest.raises(KeyError):
-        data_processor.compute_quarters(month_column='test_month')
+        data_processor.compute_quarters(month_column="test_month")
 
 
 def test_one_hot_encode(data_processor):
@@ -48,22 +48,31 @@ def test_one_hot_encode(data_processor):
     data_processor.compute_quarters()
     data_processor.one_hot_encode()
     assert data_processor.df.columns.tolist() == [
-        'arrival_month',
-        'no_of_adults',
-        'booking_status',
-        'lead_time',
-        'avg_price_per_room',
-        'no_of_children',
-        'no_of_weekend_nights',
-        'no_of_week_nights',
-        'required_car_parking_space',
-        'arrival_year',
-        'arrival_date',
-        'repeated_guest',
-        'no_of_previous_cancellations',
-        'no_of_previous_bookings_not_canceled',
-        'no_of_special_requests',
-        'Booking_ID', 'market_segment_type_Online', 'type_of_meal_plan_B', 'type_of_meal_plan_C', 'type_of_meal_plan_D', 'room_type_reserved_2', 'quarter_Q2', 'quarter_Q3', 'quarter_Q4']
+        "arrival_month",
+        "no_of_adults",
+        "booking_status",
+        "lead_time",
+        "avg_price_per_room",
+        "no_of_children",
+        "no_of_weekend_nights",
+        "no_of_week_nights",
+        "required_car_parking_space",
+        "arrival_year",
+        "arrival_date",
+        "repeated_guest",
+        "no_of_previous_cancellations",
+        "no_of_previous_bookings_not_canceled",
+        "no_of_special_requests",
+        "Booking_ID",
+        "market_segment_type_Online",
+        "type_of_meal_plan_B",
+        "type_of_meal_plan_C",
+        "type_of_meal_plan_D",
+        "room_type_reserved_2",
+        "quarter_Q2",
+        "quarter_Q3",
+        "quarter_Q4",
+    ]
 
 
 def test_label_encode(data_processor):
