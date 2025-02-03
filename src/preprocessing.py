@@ -14,6 +14,7 @@ from src.utils import configure_logging, log_transform
 
 logger = configure_logging("Hotel Reservations")
 
+
 class DataProcessor:
     """Class for data preprocessing."""
 
@@ -64,13 +65,13 @@ class DataProcessor:
         self.one_hot_encode()
         self.scale_numeric_features()
         self.label_encode()
-        self.df = self.df.drop(self.config.columns_to_drop,axis=1)
+        self.df = self.df.drop(self.config.columns_to_drop, axis=1)
 
-    def compute_quarters(self, month_column: str="arrival_month"):
+    def compute_quarters(self, month_column: str = "arrival_month"):
         """Compute the quarter column based on the month column.
-        
-            Args:
-                month_column (str): The name of the month column.      
+
+        Args:
+            month_column (str): The name of the month column.
         """
         try:
             logger.info(f"Computing quarters based on {month_column}...")
@@ -127,7 +128,7 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error occurred while splitting data: {e}")
         return train_set, test_set
-    
+
     def save_to_catalog(self, train_set: pd.DataFrame, test_set: pd.DataFrame, spark: SparkSession):
         """Save the train and test sets into Databricks tables.
 

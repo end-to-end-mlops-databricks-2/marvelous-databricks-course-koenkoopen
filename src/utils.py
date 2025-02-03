@@ -1,11 +1,12 @@
 """Module with utils functions."""
 
 import logging
-import sys
 import os
+import sys
 
 import numpy as np
 import pandas as pd
+
 
 def configure_logging(name, log_file_path=None):
     """Configures the logging module for a given module.
@@ -46,9 +47,10 @@ def configure_logging(name, log_file_path=None):
 
     return logger
 
+
 def log_transform(df: pd.DataFrame, col_names: list) -> pd.DataFrame:
     """Log transform column col_name in Pandas DataFrame df.
-    
+
     Args:
         df (pd.DataFrame): The Pandas DataFrame to transform.
         col_name (list): A list of strings, each representing the name of the column to transform.
