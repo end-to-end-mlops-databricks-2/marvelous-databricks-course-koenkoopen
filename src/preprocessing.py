@@ -18,14 +18,14 @@ logger = configure_logging("Hotel Reservations")
 class DataProcessor:
     """Class for data preprocessing."""
 
-    def __init__(self, pandas_df: pd.DataFrame, config: ProjectConfig):
+    def __init__(self, spark_df: pd.DataFrame, config: ProjectConfig):
         """Initialize the DataProcessor class.
 
         Args:
-            pandas_df (pd.DataFrame): The input DataFrame.
+            spark_df (pd.DataFrame): The input DataFrame.
             config (ProjectConfig): The configuration object.
         """
-        self.df = pandas_df.toPandas()  # Store the DataFrame as self.df
+        self.df = spark_df.toPandas()  # Store the DataFrame as self.df
         self.config = config  # Store the configuration
         logger.info("DataProcessor initialized")
 
@@ -104,7 +104,7 @@ class DataProcessor:
         """
         try:
             logger.info(f"Computing quarters based on {month_column}...")
-            self.df["quarter"] = self.df[month_column].apply(lambda x: f"Q{x // 3}")
+            self.df["quarter"] = self.df[month_column].apply(lambda x: f"Q{(x - 1) // 3 + 1}")
         except KeyError as e:
             logger.error(f"While computing quarters, the column {month_column} does not exist in the DataFrame: {e}")
             raise KeyError(

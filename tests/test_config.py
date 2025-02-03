@@ -4,6 +4,7 @@ from src.config import ProjectConfig
 
 
 def test_project_config():
+    """Unit test for the ProjectConfig class."""
     config_path = "project_config.yml"
     config = ProjectConfig.from_yaml(config_path)
     assert config.catalog_name == "koen_dev"
