@@ -75,6 +75,16 @@ def test_one_hot_encode(data_processor):
     ]
 
 
+def test_one_hot_encode_keyerror(data_processor):
+    """Unit test for one_hot_encode function when missing a column.
+
+    Args:
+        data_processor (DataProcessor): The DataProcessor object.
+    """
+    with pytest.raises(KeyError):
+        data_processor.one_hot_encode()
+
+
 def test_label_encode(data_processor):
     """Unit test for label_encode function.
 
@@ -83,6 +93,39 @@ def test_label_encode(data_processor):
     """
     data_processor.label_encode()
     assert data_processor.df["booking_status"][0] == 0
+
+
+def test_label_encode_keyerror(data_processor):
+    """Unit test for label_encode function when the target column is not in the dataframe.
+
+    Args:
+        data_processor (DataProcessor): The DataProcessor object.
+    """
+    data_processor.config.target = "test_target"
+    with pytest.raises(KeyError):
+        data_processor.label_encode()
+
+
+def test_scale_numeric_features(data_processor):
+    """Unit test for scale_numeric_features function.
+
+    Args:
+        data_processor (DataProcessor): The DataProcessor object.
+    """
+    data_processor.scale_numeric_features()
+    assert data_processor.df["lead_time"].min() >= 0
+    assert data_processor.df["lead_time"].max() <= 1
+
+
+def test_scale_numeric_features_keyerror(data_processor):
+    """Unit test for scale_numeric_features function correctly raising a keyerror.
+
+    Args:
+        data_processor (DataProcessor): The DataProcessor object.
+    """
+    data_processor.config.num_features = ["test_feature"]
+    with pytest.raises(KeyError):
+        data_processor.scale_numeric_features()
 
 
 def test_split_data(data_processor):
