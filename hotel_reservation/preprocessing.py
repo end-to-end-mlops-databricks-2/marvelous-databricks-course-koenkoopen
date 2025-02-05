@@ -9,8 +9,8 @@ from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
-from src.config import ProjectConfig
-from src.utils import configure_logging, log_transform
+from hotel_reservation.config import ProjectConfig
+from hotel_reservation.utils import configure_logging, log_transform
 
 logger = configure_logging("Hotel Reservations")
 

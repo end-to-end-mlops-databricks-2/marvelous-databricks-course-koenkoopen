@@ -4,8 +4,8 @@ import pandas as pd
 import pytest
 from pyspark.sql import SparkSession
 
-from src.config import ProjectConfig
-from src.preprocessing import DataProcessor
+from hotel_reservation.config import ProjectConfig
+from hotel_reservation.preprocessing import DataProcessor
 
 
 @pytest.fixture

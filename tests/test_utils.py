@@ -4,7 +4,7 @@ import logging
 
 import numpy as np
 
-from src.utils import configure_logging, log_transform
+from hotel_reservation.utils import configure_logging, log_transform
 
 
 def test_configure_logging():

@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from src.preprocessing import DataProcessor
+from hotel_reservation.preprocessing import DataProcessor
 
 
 def test_compute_quarters(data_processor):

@@ -1,6 +1,6 @@
 """This file contains unit tests with pytest for src/config.py."""
 
-from src.config import ProjectConfig
+from hotel_reservation.config import ProjectConfig
 
 
 def test_project_config():
