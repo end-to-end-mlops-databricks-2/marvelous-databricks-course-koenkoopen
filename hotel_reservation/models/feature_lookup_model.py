@@ -6,12 +6,13 @@ import mlflow
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
-from house_price.config import ProjectConfig, Tags
 
 # from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
+from sklearn.ensemble import RandomForestClassifier
 
+from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations")
@@ -45,16 +46,38 @@ class FeatureLookUpModel:
 
     def create_feature_table(self):
         """Create the feature table."""
-        pass
+        self.spark.sql(f"""
+        CREATE OR REPLACE TABLE {self.feature_table_name}
+        (Booking_ID STRING NOT NULL, no_of_adults DOUBLE, no_of_children DOUBLE, avg_price_per_room DOUBLE);
+        """)
+        self.spark.sql(f"ALTER TABLE {self.feature_table_name} ADD CONSTRAINT hotel_pk PRIMARY KEY(Booking_ID);")
+        self.spark.sql(f"ALTER TABLE {self.feature_table_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
+
+        self.spark.sql(
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.train_set"
+        )
+        self.spark.sql(
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.test_set"
+        )
+        logger.info("✅ Feature table created and populated.")
 
     def define_feature_function(self):
-        """Define a function to calculate ..."""
-        pass
+        """Define a function to calculate cancellation_probability"""
+        self.spark.sql(f"""
+        CREATE OR REPLACE FUNCTION {self.function_name}(no_of_previous_cancellations INT, no_of_previous_bookings_not_canceled INT)
+        RETURNS INT
+        LANGUAGE PYTHON AS
+        $$
+        cancellation_probability = no_of_previous_cancellations / no_of_previous_bookings_not_canceled
+        return cancellation_probability
+        $$
+        """)
+        logger.info("✅ Feature function defined.")
 
     def load_data(self):
         """Load data from Databricks Delta tables."""
         self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(
-            "OverallQual", "GrLivArea", "GarageCars"
+            "no_of_adults", "no_of_children", "avg_price_per_room"
         )
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set").toPandas()
 
@@ -68,13 +91,13 @@ class FeatureLookUpModel:
             feature_lookups=[
                 FeatureLookup(
                     table_name=self.feature_table_name,
-                    feature_names=["OverallQual", "GrLivArea", "GarageCars"],
+                    feature_names=["no_of_adults", "no_of_children", "avg_price_per_room"],
                     lookup_key="Id",
                 ),
                 FeatureFunction(
                     udf_name=self.function_name,
-                    output_name="house_age",
-                    input_bindings={"year_built": "YearBuilt"},
+                    output_name="cancellation_probability",
+                    input_bindings={"no_of_previous_cancellations": "no_of_previous_cancellations", "no_of_previous_bookings_not_canceled": "no_of_previous_bookings_not_canceled"},
                 ),
             ],
             exclude_columns=["update_timestamp_utc"],
@@ -82,11 +105,11 @@ class FeatureLookUpModel:
 
         self.training_df = self.training_set.load_df().toPandas()
         current_year = datetime.now().year
-        self.test_set["house_age"] = current_year - self.test_set["YearBuilt"]
+        self.test_set["cancellation_probability"] = self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
 
-        self.X_train = self.training_df[self.num_features + self.cat_features + ["house_age"]]
+        self.X_train = self.training_df[self.num_features + self.cat_features + ["cancellation_probability"]]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.num_features + self.cat_features + ["house_age"]]
+        self.X_test = self.test_set[self.num_features + self.cat_features + ["cancellation_probability"]]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
@@ -94,41 +117,38 @@ class FeatureLookUpModel:
     def train(self):
         """Train the model and log results to MLflow."""
         logger.info("🚀 Starting training...")
-        # preprocessor = ColumnTransformer(
-        #     transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), self.cat_features)], remainder="passthrough"
-        # )
 
-        # pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", LGBMRegressor(**self.parameters))])
+        rf_model = RandomForestClassifier(min_samples_leaf=self.parameters["min_samples_leaf"], min_samples_split=self.parameters["min_samples_split"], n_estimators=self.parameters["n_estimators"])
 
         mlflow.set_experiment(self.experiment_name)
 
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
-            # pipeline.fit(self.X_train, self.y_train)
-            # y_pred = pipeline.predict(self.X_test)
+            rf_model.fit(self.X_train, self.y_train)
+            y_pred = rf_model.predict(self.X_test)
 
-            # mse = mean_squared_error(self.y_test, y_pred)
-            # mae = mean_absolute_error(self.y_test, y_pred)
-            # r2 = r2_score(self.y_test, y_pred)
+            mse = mean_squared_error(self.y_test, y_pred)
+            mae = mean_absolute_error(self.y_test, y_pred)
+            r2 = r2_score(self.y_test, y_pred)
 
-            # logger.info(f"📊 Mean Squared Error: {mse}")
-            # logger.info(f"📊 Mean Absolute Error: {mae}")
-            # logger.info(f"📊 R2 Score: {r2}")
+            logger.info(f"📊 Mean Squared Error: {mse}")
+            logger.info(f"📊 Mean Absolute Error: {mae}")
+            logger.info(f"📊 R2 Score: {r2}")
 
-            # mlflow.log_param("model_type", "LightGBM with preprocessing")
-            # mlflow.log_params(self.parameters)
-            # mlflow.log_metric("mse", mse)
-            # mlflow.log_metric("mae", mae)
-            # mlflow.log_metric("r2_score", r2)
-            # signature = infer_signature(self.X_train, y_pred)
+            mlflow.log_param("model_type", "RandomForestClassifier")
+            mlflow.log_params(self.parameters)
+            mlflow.log_metric("mse", mse)
+            mlflow.log_metric("mae", mae)
+            mlflow.log_metric("r2_score", r2)
+            signature = infer_signature(self.X_train, y_pred)
 
-            # self.fe.log_model(
-            #     model=pipeline,
-            #     flavor=mlflow.sklearn,
-            #     artifact_path="lightgbm-pipeline-model-fe",
-            #     training_set=self.training_set,
-            #     signature=signature,
-            # )
+            self.fe.log_model(
+                model=pipeline,
+                flavor=mlflow.sklearn,
+                artifact_path="RandomForestClassifie-model-fe",
+                training_set=self.training_set,
+                signature=signature,
+            )
 
     def register_model(self):
         """Register the model with MLflow."""
