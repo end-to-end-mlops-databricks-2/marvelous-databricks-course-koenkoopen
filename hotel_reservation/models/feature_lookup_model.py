@@ -64,11 +64,14 @@ class FeatureLookUpModel:
     def define_feature_function(self):
         """Define a function to calculate cancellation_probability"""
         self.spark.sql(f"""
-        CREATE OR REPLACE FUNCTION {self.function_name}(no_of_previous_cancellations INT, no_of_previous_bookings_not_canceled INT)
+        CREATE OR REPLACE FUNCTION {self.function_name}(no_of_previous_cancellations DOUBLE, no_of_previous_bookings_not_canceled DOUBLE)
         RETURNS INT
         LANGUAGE PYTHON AS
         $$
-        cancellation_probability = no_of_previous_cancellations / no_of_previous_bookings_not_canceled
+        if no_of_previous_bookings_not_canceled == 0:
+            cancellation_probability = 0 if no_of_previous_cancellations == 0 else 1
+        else:
+            cancellation_probability = no_of_previous_cancellations / no_of_previous_bookings_not_canceled
         return cancellation_probability
         $$
         """)
@@ -92,7 +95,7 @@ class FeatureLookUpModel:
                 FeatureLookup(
                     table_name=self.feature_table_name,
                     feature_names=["no_of_adults", "no_of_children", "avg_price_per_room"],
-                    lookup_key="Id",
+                    lookup_key="Booking_ID",
                 ),
                 FeatureFunction(
                     udf_name=self.function_name,
