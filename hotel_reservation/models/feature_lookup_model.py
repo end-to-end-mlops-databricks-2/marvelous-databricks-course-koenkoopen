@@ -38,7 +38,7 @@ class FeatureLookUpModel:
 
         # Define table names and function name
         self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reservation_features"
-        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_..."
+        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_cancellation_probability"
 
         # MLflow configuration
         self.experiment_name = self.config.experiment_name_fe
@@ -54,10 +54,10 @@ class FeatureLookUpModel:
         self.spark.sql(f"ALTER TABLE {self.feature_table_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 
         self.spark.sql(
-            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.train_set"
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.train_dataset"
         )
         self.spark.sql(
-            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.test_set"
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, avg_price_per_room FROM {self.catalog_name}.{self.schema_name}.test_dataset"
         )
         logger.info("✅ Feature table created and populated.")
 
@@ -76,10 +76,10 @@ class FeatureLookUpModel:
 
     def load_data(self):
         """Load data from Databricks Delta tables."""
-        self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(
+        self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_dataset").drop(
             "no_of_adults", "no_of_children", "avg_price_per_room"
         )
-        self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set").toPandas()
+        self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
 
         logger.info("✅ Data successfully loaded.")
 
