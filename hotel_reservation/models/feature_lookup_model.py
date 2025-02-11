@@ -7,10 +7,11 @@ from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 
-# from mlflow.models import infer_signature
+from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
@@ -139,7 +140,7 @@ class FeatureLookUpModel:
             logger.info(f"📊 Mean Absolute Error: {mae}")
             logger.info(f"📊 R2 Score: {r2}")
 
-            mlflow.log_param("model_type", "RandomForestClassifier")
+            mlflow.log_param("model_type", "HistGradientBoostingClassifier")
             mlflow.log_params(self.parameters)
             mlflow.log_metric("mse", mse)
             mlflow.log_metric("mae", mae)
@@ -147,9 +148,9 @@ class FeatureLookUpModel:
             signature = infer_signature(self.X_train, y_pred)
 
             self.fe.log_model(
-                model=pipeline,
+                model=rf_model,
                 flavor=mlflow.sklearn,
-                artifact_path="RandomForestClassifie-model-fe",
+                artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
                 signature=signature,
             )
@@ -157,7 +158,7 @@ class FeatureLookUpModel:
     def register_model(self):
         """Register the model with MLflow."""
         registered_model = mlflow.register_model(
-            model_uri=f"runs:/{self.run_id}/hotel-reservation-model-fe",
+            model_uri=f"runs:/{self.run_id}/HistGradientBoostingClassifier-model-fe",
             name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model_fe",
             tags=self.tags,
         )
