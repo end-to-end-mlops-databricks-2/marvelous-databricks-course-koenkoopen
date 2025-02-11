@@ -1,12 +1,9 @@
 """Module with feature lookup functionalities for model registration."""
 
-from datetime import datetime
-
 import mlflow
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
-
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
@@ -102,15 +99,19 @@ class FeatureLookUpModel:
                 FeatureFunction(
                     udf_name=self.function_name,
                     output_name="cancellation_probability",
-                    input_bindings={"no_of_previous_cancellations": "no_of_previous_cancellations", "no_of_previous_bookings_not_canceled": "no_of_previous_bookings_not_canceled"},
+                    input_bindings={
+                        "no_of_previous_cancellations": "no_of_previous_cancellations",
+                        "no_of_previous_bookings_not_canceled": "no_of_previous_bookings_not_canceled",
+                    },
                 ),
             ],
             exclude_columns=["update_timestamp_utc"],
         )
 
         self.training_df = self.training_set.load_df().toPandas()
-        current_year = datetime.now().year
-        self.test_set["cancellation_probability"] = self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
+        self.test_set["cancellation_probability"] = (
+            self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
+        )
 
         self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
         self.y_train = self.training_df[self.target]
@@ -123,7 +124,9 @@ class FeatureLookUpModel:
         """Train the model and log results to MLflow."""
         logger.info("🚀 Starting training...")
 
-        rf_model = HistGradientBoostingClassifier(learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"])
+        rf_model = HistGradientBoostingClassifier(
+            learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"]
+        )
 
         mlflow.set_experiment(self.experiment_name)
 
@@ -155,7 +158,7 @@ class FeatureLookUpModel:
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
-                infer_input_example=True
+                infer_input_example=True,
             )
         logger.info("Ended training.")
 
