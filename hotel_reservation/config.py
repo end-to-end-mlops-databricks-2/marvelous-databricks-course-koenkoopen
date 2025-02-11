@@ -12,6 +12,7 @@ class ProjectConfig(BaseModel):
     num_features: List[str]
     cat_features: List[str]
     one_hot_encode_cols: List[str]
+    features_used: List[str]
     columns_to_drop: List[str]
     target: str
     catalog_name: str

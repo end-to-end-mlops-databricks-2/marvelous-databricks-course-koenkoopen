@@ -31,6 +31,7 @@ class FeatureLookUpModel:
         # Extract settings from the config
         self.num_features = self.config.num_features
         self.cat_features = self.config.cat_features
+        self.features_used = self.config.features_used
         self.target = self.config.target
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
@@ -110,9 +111,9 @@ class FeatureLookUpModel:
         current_year = datetime.now().year
         self.test_set["cancellation_probability"] = self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
 
-        self.X_train = self.training_df[self.num_features + self.cat_features + ["cancellation_probability"]]
+        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.num_features + self.cat_features + ["cancellation_probability"]]
+        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")

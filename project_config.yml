@@ -3,6 +3,8 @@ parameters:
   min_samples_split: 2
   n_estimators: 100
 
+experiment_name_fe: /Shared/house-prices-fe
+
 num_features:
   - no_of_adults
   - no_of_children
@@ -39,6 +41,30 @@ columns_to_drop:
   - room_type_reserved_Room_Type 5
   - type_of_meal_plan_Not Selected
   - type_of_meal_plan_Meal Plan 3
+
+features_used:
+  - no_of_adults
+  - no_of_children
+  - no_of_weekend_nights
+  - no_of_week_nights
+  - required_car_parking_space
+  - lead_time
+  - repeated_guest
+  - no_of_previous_cancellations
+  - no_of_previous_bookings_not_canceled
+  - avg_price_per_room
+  - no_of_special_requests
+  - market_segment_type_Complementary
+  - market_segment_type_Corporate
+  - market_segment_type_Offline
+  - market_segment_type_Online
+  - type_of_meal_plan_Meal_Plan_2
+  - room_type_reserved_Room_Type_4
+  - room_type_reserved_Room_Type_6
+  - room_type_reserved_Room_Type_7
+  - quarter_Q2
+  - quarter_Q3
+  - quarter_Q4
 
 target: booking_status
 
