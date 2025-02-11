@@ -10,7 +10,7 @@ from databricks.sdk import WorkspaceClient
 # from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
@@ -122,7 +122,7 @@ class FeatureLookUpModel:
         """Train the model and log results to MLflow."""
         logger.info("🚀 Starting training...")
 
-        rf_model = RandomForestClassifier(min_samples_leaf=self.parameters["min_samples_leaf"], min_samples_split=self.parameters["min_samples_split"], n_estimators=self.parameters["n_estimators"])
+        rf_model = HistGradientBoostingClassifier(learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"])
 
         mlflow.set_experiment(self.experiment_name)
 
