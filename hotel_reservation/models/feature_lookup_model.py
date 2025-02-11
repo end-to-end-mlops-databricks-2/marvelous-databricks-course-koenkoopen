@@ -145,15 +145,19 @@ class FeatureLookUpModel:
             mlflow.log_metric("mse", mse)
             mlflow.log_metric("mae", mae)
             mlflow.log_metric("r2_score", r2)
-            signature = infer_signature(self.X_train, y_pred)
+
+            signature = infer_signature(self.X_test, y_pred)
+
+            mlflow.sklearn.log_model(rf_model, "HistGradientBoostingClassifier-model-fe", signature=signature)
 
             self.fe.log_model(
                 model=rf_model,
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
-                signature=signature,
+                infer_input_example=True
             )
+        logger.info("Ended training.")
 
     def register_model(self):
         """Register the model with MLflow."""
