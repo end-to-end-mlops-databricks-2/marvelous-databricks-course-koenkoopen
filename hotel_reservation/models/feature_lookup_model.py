@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
 
-logger = configure_logging("Hotel Reservations")
+logger = configure_logging("Hotel Reservations Feature Lookup Model.")
 
 
 class FeatureLookUpModel:
