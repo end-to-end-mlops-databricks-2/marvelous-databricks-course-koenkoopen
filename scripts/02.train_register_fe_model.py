@@ -3,12 +3,16 @@ from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.models.feature_lookup_model import FeatureLookUpModel
+from hotel_reservation.utils import configure_logging
 
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")
+logger = configure_logging("Hotel Reservations Model Training")
+
 
 config = ProjectConfig.from_yaml(config_path="../project_config.yml")
+logger.info("Configuration loaded")
 spark = SparkSession.builder.getOrCreate()
 tags_dict = {"git_sha": "4ce0950880b6fdade547501027c83efd6bc5ed86", "branch": "feature/week2_train_register_model"}
 tags = Tags(**tags_dict)
