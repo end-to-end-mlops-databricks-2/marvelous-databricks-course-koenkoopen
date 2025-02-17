@@ -13,7 +13,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
 
-logger = configure_logging("Hotel Reservations Feature Lookup Model.")
+logger = configure_logging("Hotel Reservations feature lookup")
 
 
 class FeatureLookUpModel:
@@ -105,7 +105,7 @@ class FeatureLookUpModel:
                     },
                 ),
             ],
-            exclude_columns=["update_timestamp_utc"],
+            exclude_columns=["update_timestamp_utc", "Booking_ID"],
         )
 
         self.training_df = self.training_set.load_df().toPandas()
@@ -113,9 +113,9 @@ class FeatureLookUpModel:
             self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
         )
 
-        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]
+        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]
+        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
