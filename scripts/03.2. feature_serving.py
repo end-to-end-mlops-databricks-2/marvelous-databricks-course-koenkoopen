@@ -2,7 +2,6 @@ import os
 import time
 
 import mlflow
-import pandas as pd
 import requests
 from databricks import feature_engineering
 from pyspark.dbutils import DBUtils
@@ -10,7 +9,6 @@ from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig
 from hotel_reservation.serving.feature_serving import FeatureServing
-
 from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations Deploy Model")
