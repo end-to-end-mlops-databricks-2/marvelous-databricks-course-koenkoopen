@@ -1,6 +1,3 @@
-%pip install databricks-feature-engineering==0.6 databricks-sdk==0.32.0
-%restart_python
-
 import os
 import time
 
