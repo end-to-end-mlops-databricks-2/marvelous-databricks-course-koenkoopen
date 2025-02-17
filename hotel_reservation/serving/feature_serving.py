@@ -31,12 +31,15 @@ class FeatureServing:
     def create_online_table(self):
         """Creates an online table based on the feature table."""
         spec = OnlineTableSpec(
-            primary_key_columns=["Id"],
+            primary_key_columns=["Booking_ID"],
             source_table_full_name=self.feature_table_name,
             run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
             perform_full_copy=False,
         )
-        self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
+        try:
+            self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
+        except Exception:
+            logger.warning(f"Online table {self.online_table_name} already exists.")
 
     def create_feature_spec(self):
         """
