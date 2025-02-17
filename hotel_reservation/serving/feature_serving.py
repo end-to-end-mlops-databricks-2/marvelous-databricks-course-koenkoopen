@@ -52,7 +52,10 @@ class FeatureServing:
                 feature_names=["no_of_adults", "no_of_children", "avg_price_per_room"],
             )
         ]
-        self.fe.create_feature_spec(name=self.feature_spec_name, features=features, exclude_columns=None)
+        try:
+            self.fe.create_feature_spec(name=self.feature_spec_name, features=features, exclude_columns=None)
+        except Exception:
+            logger.warning(f"Feature spec {self.feature_spec_name} already exists.")
 
     def deploy_or_update_serving_endpoint(self, workload_size: str = "Small", scale_to_zero: bool = True):
         """
