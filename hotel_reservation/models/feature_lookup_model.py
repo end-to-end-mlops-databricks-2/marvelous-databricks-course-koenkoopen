@@ -105,7 +105,7 @@ class FeatureLookUpModel:
                     },
                 ),
             ],
-            exclude_columns=["update_timestamp_utc"],
+            exclude_columns=["update_timestamp_utc", "Booking_ID"],
         )
 
         self.training_df = self.training_set.load_df().toPandas()
