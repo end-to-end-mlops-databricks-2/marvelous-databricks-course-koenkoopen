@@ -149,7 +149,7 @@ class FeatureLookUpModel:
             mlflow.log_metric("mae", mae)
             mlflow.log_metric("r2_score", r2)
 
-            signature = infer_signature(self.X_test, y_pred)
+            signature = infer_signature(self.X_train, y_pred)
 
             mlflow.sklearn.log_model(rf_model, "HistGradientBoostingClassifier-model-fe", signature=signature)
 
