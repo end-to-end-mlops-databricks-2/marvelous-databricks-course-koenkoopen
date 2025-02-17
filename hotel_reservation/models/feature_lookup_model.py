@@ -113,9 +113,9 @@ class FeatureLookUpModel:
             self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
         )
 
-        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
+        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]]
+        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
