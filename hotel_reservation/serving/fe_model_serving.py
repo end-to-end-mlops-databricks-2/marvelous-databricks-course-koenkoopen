@@ -1,16 +1,15 @@
 """Module for feature lookup serving."""
+
 import os
-import requests
-from typing import Dict
 
 import mlflow
+import requests
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.catalog import (
     OnlineTableSpec,
     OnlineTableSpecTriggeredSchedulingPolicy,
 )
 from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
-
 
 from hotel_reservation.utils import configure_logging
 
@@ -38,9 +37,8 @@ class FeatureLookupServing:
         )
         try:
             self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
-        except Exception as e:
+        except Exception:
             logger.warning(f"Online table {self.online_table_name} already exists.")
-
 
     def get_latest_model_version(self):
         """Returns the latest model version."""
@@ -86,10 +84,10 @@ class FeatureLookupServing:
 
     def call_endpoint(self, record: list, columns: list):
         """Calls the model serving endpoint with a given input record.
-        
+
         Args:
             - records (list): A list of dictionaries with records to send to the endpoint.
-        
+
         Returns:
             - A dictionary of predictions.
         """

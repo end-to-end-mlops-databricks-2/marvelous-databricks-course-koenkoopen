@@ -2,8 +2,6 @@
 
 import logging
 
-import numpy as np
-
 from hotel_reservation.utils import configure_logging
 
 

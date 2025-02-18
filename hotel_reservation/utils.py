@@ -4,9 +4,6 @@ import logging
 import os
 import sys
 
-import numpy as np
-import pandas as pd
-
 
 def configure_logging(name, log_file_path=None):
     """Configures the logging module for a given module.

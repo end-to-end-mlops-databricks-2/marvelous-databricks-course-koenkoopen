@@ -1,16 +1,18 @@
 """Module with feature lookup functionalities for model registration."""
 
 import mlflow
+import numpy as np
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
@@ -135,7 +137,12 @@ class FeatureLookUpModel:
         log_transformer = FunctionTransformer(np.log1p, validate=True)
 
         preprocessor = ColumnTransformer(
-            transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols), ("num", MinMaxScaler(), self.num_features), ("log", log_transformer, self.num_features)], remainder="passthrough"
+            transformers=[
+                ("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols),
+                ("num", MinMaxScaler(), self.num_features),
+                ("log", log_transformer, self.num_features),
+            ],
+            remainder="passthrough",
         )
 
         pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", rf_model)])
