@@ -9,6 +9,8 @@ from mlflow.tracking import MlflowClient
 from pyspark.sql import SparkSession
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import Pipeline
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import configure_logging
@@ -64,7 +66,7 @@ class FeatureLookUpModel:
         """Define a function to calculate cancellation_probability"""
         self.spark.sql(f"""
         CREATE OR REPLACE FUNCTION {self.function_name}(no_of_previous_cancellations DOUBLE, no_of_previous_bookings_not_canceled DOUBLE)
-        RETURNS INT
+        RETURNS DOUBLE
         LANGUAGE PYTHON AS
         $$
         if no_of_previous_bookings_not_canceled == 0:
@@ -81,6 +83,7 @@ class FeatureLookUpModel:
         self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_dataset").drop(
             "no_of_adults", "no_of_children", "avg_price_per_room"
         )
+        self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_ID"].cast("string"))
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
 
         logger.info("✅ Data successfully loaded.")
@@ -128,12 +131,21 @@ class FeatureLookUpModel:
             learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"]
         )
 
+        # Define the log transformer using FunctionTransformer
+        log_transformer = FunctionTransformer(np.log1p, validate=True)
+
+        preprocessor = ColumnTransformer(
+            transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols), ("num", MinMaxScaler(), self.num_features), ("log", log_transformer, self.num_features)], remainder="passthrough"
+        )
+
+        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", rf_model)])
+
         mlflow.set_experiment(self.experiment_name)
 
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
-            rf_model.fit(self.X_train, self.y_train)
-            y_pred = rf_model.predict(self.X_test)
+            pipeline.fit(self.X_train, self.y_train)
+            y_pred = pipeline.predict(self.X_test)
 
             mse = mean_squared_error(self.y_test, y_pred)
             mae = mean_absolute_error(self.y_test, y_pred)
@@ -151,10 +163,10 @@ class FeatureLookUpModel:
 
             signature = infer_signature(self.X_train, y_pred)
 
-            mlflow.sklearn.log_model(rf_model, "HistGradientBoostingClassifier-model-fe", signature=signature)
+            mlflow.sklearn.log_model(pipeline, "HistGradientBoostingClassifier-model-fe", signature=signature)
 
             self.fe.log_model(
-                model=rf_model,
+                model=pipeline,
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,

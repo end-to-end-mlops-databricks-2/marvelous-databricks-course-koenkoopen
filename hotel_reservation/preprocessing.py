@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 from hotel_reservation.config import ProjectConfig
-from hotel_reservation.utils import configure_logging, log_transform
+from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations")
 
@@ -89,9 +89,6 @@ class DataProcessor:
 
         self.df = self.df[relevant_columns]
         self.compute_quarters("arrival_month")
-        self.df = log_transform(self.df, num_features)
-        self.one_hot_encode()
-        self.scale_numeric_features()
         self.label_encode()
         self.df = self.df.drop(self.config.columns_to_drop, axis=1)
         self.df.columns = self.df.columns.str.replace(" ", "_")
@@ -114,19 +111,6 @@ class DataProcessor:
             logger.error(f"Unexpected error occurred while computing quarters: {e}")
             raise Exception(f"Unexpected error occurred while computing quarters: {e}") from e
 
-    def one_hot_encode(self):
-        """One hot encodes the categorical features."""
-        logger.info("One hot encoding categorical features...")
-        try:
-            one_hot_encode_cols = self.config.one_hot_encode_cols
-            self.df = pd.get_dummies(self.df, columns=one_hot_encode_cols, drop_first=True, dtype=int)
-        except KeyError as e:
-            logger.error(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}")
-            raise KeyError(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}") from e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred while one hot encoding: {e}")
-            raise Exception(f"Unexpected error occurred while one hot encoding: {e}") from e
-
     def label_encode(self):
         """Label encode the target variable."""
         logger.info("Label encoding target variable...")
@@ -140,24 +124,6 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error occurred while label encoding: {e}")
             raise Exception(f"Unexpected error occurred while label encoding: {e}") from e
-
-    def scale_numeric_features(self):
-        """Scale the numeric features using the MinMaxScaler."""
-        logger.info("Scaling numeric features...")
-        try:
-            num_features = self.config.num_features
-            scaler = MinMaxScaler()
-            self.df[num_features] = scaler.fit_transform(self.df[num_features])
-        except KeyError as e:
-            logger.error(
-                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
-            )
-            raise KeyError(
-                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
-            ) from e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred while scaling numeric features: {e}")
-            raise Exception(f"Unexpected error occurred while scaling numeric features: {e}") from e
 
     def split_data(self, test_size=0.2, random_state=42) -> Tuple[np.ndarray, np.ndarray]:
         """Split the DataFrame (self.df) into training and test sets.

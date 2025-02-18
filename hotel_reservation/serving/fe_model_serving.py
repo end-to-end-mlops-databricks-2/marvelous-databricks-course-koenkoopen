@@ -84,7 +84,7 @@ class FeatureLookupServing:
         else:
             self.workspace.serving_endpoints.update_config(name=self.endpoint_name, served_entities=served_entities)
 
-    def call_endpoint(self, record: list):
+    def call_endpoint(self, record: list, columns: list):
         """Calls the model serving endpoint with a given input record.
         
         Args:
@@ -95,9 +95,16 @@ class FeatureLookupServing:
         """
         serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/{self.endpoint_name}/invocations"
 
+        # response = requests.post(
+        #     serving_endpoint,
+        #     headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+        #     json={"dataframe_records": record},
+        # )
+
         response = requests.post(
-            serving_endpoint,
+            f"{serving_endpoint}",
             headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
-            json={"dataframe_records": record},
+            json={"dataframe_split": {"columns": columns, "data": record}},
         )
+
         return response.status_code, response.text
