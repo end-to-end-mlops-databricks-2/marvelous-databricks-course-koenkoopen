@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
 from hotel_reservation.config import ProjectConfig, Tags
-from hotel_reservation.utils import configure_logging
+from hotel_reservation.utils import DropColumnsTransformer, configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
 
@@ -86,6 +86,8 @@ class FeatureLookUpModel:
             "no_of_adults", "no_of_children", "avg_price_per_room"
         )
         self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_ID"].cast("string"))
+        self.train_set = self.train_set.withColumn("no_of_previous_cancellations", self.train_set["no_of_previous_cancellations"].cast("double"))
+        self.train_set = self.train_set.withColumn("no_of_previous_bookings_not_canceled", self.train_set["no_of_previous_bookings_not_canceled"].cast("double"))
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
 
         logger.info("✅ Data successfully loaded.")
@@ -117,10 +119,9 @@ class FeatureLookUpModel:
         self.test_set["cancellation_probability"] = (
             self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
         )
-
-        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
+        self.X_train = self.training_df
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]]
+        self.X_test = self.test_set
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
@@ -141,6 +142,7 @@ class FeatureLookUpModel:
                 ("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols),
                 ("num", MinMaxScaler(), self.num_features),
                 ("log", log_transformer, self.num_features),
+                ("drop", DropColumnsTransformer(columns_to_drop=self.config.columns_to_drop), self.config.columns_to_drop)
             ],
             remainder="passthrough",
         )

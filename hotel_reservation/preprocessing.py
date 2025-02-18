@@ -90,7 +90,6 @@ class DataProcessor:
         self.df = self.df[relevant_columns]
         self.compute_quarters("arrival_month")
         self.label_encode()
-        self.df = self.df.drop(self.config.columns_to_drop, axis=1)
         self.df.columns = self.df.columns.str.replace(" ", "_")
 
     def compute_quarters(self, month_column: str = "arrival_month"):

@@ -101,7 +101,7 @@ class FeatureLookupServing:
 
         response = requests.post(
             f"{serving_endpoint}",
-            headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+            headers={"Authorization": f"Bearer {os.environ['OAUTH_TOKEN']}"},
             json={"dataframe_split": {"columns": columns, "data": record}},
         )
 
