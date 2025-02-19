@@ -2,6 +2,7 @@
 
 import mlflow
 import numpy as np
+import pandas as pd
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
@@ -164,6 +165,7 @@ class FeatureLookUpModel:
         pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", rf_model)])
 
         mlflow.set_experiment(self.experiment_name)
+        mlflow.sklearn.autolog()
 
         additional_pip_deps = ["pyspark==3.5.0"]
         for package in self.code_paths:
@@ -193,10 +195,10 @@ class FeatureLookUpModel:
 
             conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
 
-            mlflow.sklearn.log_model(HousePriceModelWrapper(pipeline), "HistGradientBoostingClassifier-model-fe", conda_env=conda_env, code_paths=self.code_paths, signature=signature)
+            mlflow.sklearn.log_model(HotelReservationModelWrapper(pipeline), "HistGradientBoostingClassifier-model-fe", conda_env=conda_env, code_paths=self.code_paths, signature=signature)
 
             self.fe.log_model(
-                model=HousePriceModelWrapper(pipeline),
+                model=HotelReservationModelWrapper(pipeline),
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
