@@ -7,6 +7,7 @@ from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
+from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -18,6 +19,18 @@ from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.utils import DropColumnsTransformer, configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
+
+
+class HotelReservationModelWrapper(mlflow.pyfunc.PythonModel):
+    """Class for the model wrapper."""
+    def __init__(self, model):
+        """Initialize the HotelReservationModelWrapper class."""
+        self.model = model
+
+    def predict(self, context, model_input: pd.DataFrame | np.ndarray):
+        """Make predictions using the model."""
+        predictions = self.model.predict(model_input)
+        return {"Prediction": predictions[0]}
 
 
 class FeatureLookUpModel:
@@ -38,6 +51,7 @@ class FeatureLookUpModel:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
+        self.code_paths = self.config.code_paths
 
         # Define table names and function name
         self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reservation_features"
@@ -151,6 +165,11 @@ class FeatureLookUpModel:
 
         mlflow.set_experiment(self.experiment_name)
 
+        additional_pip_deps = ["pyspark==3.5.0"]
+        for package in self.code_paths:
+            whl_name = package.split("/")[-1]
+            additional_pip_deps.append(f"code/{whl_name}")
+
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
             pipeline.fit(self.X_train, self.y_train)
@@ -172,14 +191,17 @@ class FeatureLookUpModel:
 
             signature = infer_signature(self.X_train, y_pred)
 
-            mlflow.sklearn.log_model(pipeline, "HistGradientBoostingClassifier-model-fe", signature=signature)
+            conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
+
+            mlflow.sklearn.log_model(HousePriceModelWrapper(pipeline), "HistGradientBoostingClassifier-model-fe", conda_env=conda_env, code_paths=self.code_paths, signature=signature)
 
             self.fe.log_model(
-                model=pipeline,
+                model=HousePriceModelWrapper(pipeline),
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
-                infer_input_example=True,
+                signature=signature
+                # infer_input_example=True,
             )
         logger.info("Ended training.")
 
