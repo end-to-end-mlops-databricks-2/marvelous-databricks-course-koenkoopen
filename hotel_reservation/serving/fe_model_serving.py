@@ -4,6 +4,7 @@ import os
 
 import mlflow
 import requests
+
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.catalog import (
     OnlineTableSpec,
@@ -16,11 +17,13 @@ from hotel_reservation.utils import configure_logging
 logger = configure_logging("Hotel Reservations Feature Serving.")
 
 
+
 class FeatureLookupServing:
     """Class for feature lookup serving."""
 
     def __init__(self, model_name: str, endpoint_name: str, feature_table_name: str):
         """Initializes the Feature Lookup Serving Manager."""
+
         self.workspace = WorkspaceClient()
         self.feature_table_name = feature_table_name
         self.online_table_name = f"{self.feature_table_name}_online"
@@ -31,6 +34,7 @@ class FeatureLookupServing:
         """Creates an online table for house features."""
         spec = OnlineTableSpec(
             primary_key_columns=["Booking_ID"],
+
             source_table_full_name=self.feature_table_name,
             run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
             perform_full_copy=False,
@@ -45,6 +49,7 @@ class FeatureLookupServing:
         client = mlflow.MlflowClient()
         latest_version = client.get_model_version_by_alias(self.model_name, alias="latest-model").version
         print(f"Latest model version: {latest_version}")
+
         return latest_version
 
     def deploy_or_update_serving_endpoint(
@@ -55,6 +60,7 @@ class FeatureLookupServing:
         Args:
             - version (str): Version of the model to deploy.
             - workload_seze (str): Workload size (number of concurrent requests). Default is Small = 4 concurrent requests.
+
             - scale_to_zero (bool): If True, endpoint scales to 0 when unused.
         """
         endpoint_exists = any(item.name == self.endpoint_name for item in self.workspace.serving_endpoints.list())
@@ -106,3 +112,4 @@ class FeatureLookupServing:
         )
 
         return response.status_code, response.text
+
