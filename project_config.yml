@@ -3,7 +3,7 @@ parameters:
   learning_rate: 0.1
 
 experiment_name_fe: /Shared/house-prices-fe
-code_paths: ["/dbfs/tmp/hotel_reservation-0.0.1-py3-none-any.whl"]
+code_paths: ["/Volumes/koen_dev/gold_hotel_reservations/landingzone/hotel_reservation-0.0.4-py3-none-any.whl"]
 
 num_features:
   - no_of_adults

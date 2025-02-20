@@ -145,7 +145,7 @@ class FeatureLookUpModel:
         """Train the model and log results to MLflow."""
         logger.info("🚀 Starting training...")
 
-        rf_model = HistGradientBoostingClassifier(
+        gb_model = HistGradientBoostingClassifier(
             learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"]
         )
 
@@ -162,7 +162,7 @@ class FeatureLookUpModel:
             remainder="passthrough",
         )
 
-        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", rf_model)])
+        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", gb_model)])
 
         mlflow.set_experiment(self.experiment_name)
         mlflow.sklearn.autolog()
@@ -193,6 +193,7 @@ class FeatureLookUpModel:
 
             signature = infer_signature(self.X_train, y_pred)
 
+            logger.info(f"Adding conda env with packages: {additional_pip_deps}")
             conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
 
             mlflow.sklearn.log_model(HotelReservationModelWrapper(pipeline), "HistGradientBoostingClassifier-model-fe", conda_env=conda_env, code_paths=self.code_paths, signature=signature)
