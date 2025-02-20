@@ -24,6 +24,7 @@ logger = configure_logging("Hotel Reservations feature lookup")
 
 class HotelReservationModelWrapper(mlflow.pyfunc.PythonModel):
     """Class for the model wrapper."""
+
     def __init__(self, model):
         """Initialize the HotelReservationModelWrapper class."""
         self.model = model
@@ -101,8 +102,13 @@ class FeatureLookUpModel:
             "no_of_adults", "no_of_children", "avg_price_per_room"
         )
         self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_ID"].cast("string"))
-        self.train_set = self.train_set.withColumn("no_of_previous_cancellations", self.train_set["no_of_previous_cancellations"].cast("double"))
-        self.train_set = self.train_set.withColumn("no_of_previous_bookings_not_canceled", self.train_set["no_of_previous_bookings_not_canceled"].cast("double"))
+        self.train_set = self.train_set.withColumn(
+            "no_of_previous_cancellations", self.train_set["no_of_previous_cancellations"].cast("double")
+        )
+        self.train_set = self.train_set.withColumn(
+            "no_of_previous_bookings_not_canceled",
+            self.train_set["no_of_previous_bookings_not_canceled"].cast("double"),
+        )
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
 
         logger.info("✅ Data successfully loaded.")
@@ -157,7 +163,11 @@ class FeatureLookUpModel:
                 ("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols),
                 ("num", MinMaxScaler(), self.num_features),
                 ("log", log_transformer, self.num_features),
-                ("drop", DropColumnsTransformer(columns_to_drop=self.config.columns_to_drop), self.config.columns_to_drop)
+                (
+                    "drop",
+                    DropColumnsTransformer(columns_to_drop=self.config.columns_to_drop),
+                    self.config.columns_to_drop,
+                ),
             ],
             remainder="passthrough",
         )
@@ -196,14 +206,20 @@ class FeatureLookUpModel:
             logger.info(f"Adding conda env with packages: {additional_pip_deps}")
             conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
 
-            mlflow.sklearn.log_model(HotelReservationModelWrapper(pipeline), "HistGradientBoostingClassifier-model-fe", conda_env=conda_env, code_paths=self.code_paths, signature=signature)
+            mlflow.sklearn.log_model(
+                HotelReservationModelWrapper(pipeline),
+                "HistGradientBoostingClassifier-model-fe",
+                conda_env=conda_env,
+                code_paths=self.code_paths,
+                signature=signature,
+            )
 
             self.fe.log_model(
                 model=HotelReservationModelWrapper(pipeline),
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
-                signature=signature
+                signature=signature,
                 # infer_input_example=True,
             )
         logger.info("Ended training.")

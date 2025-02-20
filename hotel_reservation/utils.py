@@ -4,21 +4,20 @@ import logging
 import os
 import sys
 
-import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
 
 
 class DropColumnsTransformer(BaseEstimator, TransformerMixin):
     """Transformer class to drop columns in sklearn pipeline."""
+
     def __init__(self, columns_to_drop):
         self.columns_to_drop = columns_to_drop
-    
+
     def fit(self, X, y=None):
         """Fit the transformer."""
         # No fitting needed for dropping columns, just return self
         return self
-    
+
     def transform(self, X):
         """Transform the input DataFrame by dropping the specified columns."""
         # Drop the specified columns and return the transformed DataFrame
