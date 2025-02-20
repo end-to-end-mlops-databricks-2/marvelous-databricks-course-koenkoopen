@@ -5,7 +5,6 @@ from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.models.feature_lookup_model import FeatureLookUpModel
 from hotel_reservation.utils import configure_logging
 
-
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")

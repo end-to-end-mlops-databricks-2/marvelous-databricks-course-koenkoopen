@@ -4,7 +4,6 @@ import os
 
 import mlflow
 import requests
-
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.catalog import (
     OnlineTableSpec,
@@ -15,7 +14,6 @@ from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntity
 from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations Feature Serving.")
-
 
 
 class FeatureLookupServing:
@@ -34,7 +32,6 @@ class FeatureLookupServing:
         """Creates an online table for house features."""
         spec = OnlineTableSpec(
             primary_key_columns=["Booking_ID"],
-
             source_table_full_name=self.feature_table_name,
             run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
             perform_full_copy=False,
@@ -112,4 +109,3 @@ class FeatureLookupServing:
         )
 
         return response.status_code, response.text
-
