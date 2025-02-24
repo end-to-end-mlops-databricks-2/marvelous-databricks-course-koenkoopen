@@ -5,15 +5,120 @@
 bundle:
   name: marvelous-databricks-course-koenkoopen
 
+artifacts:
+  default:
+    type: whl
+    build: uv build
+    path: .
+
+variables:
+  git_sha:
+    description: git_sha
+    default: abcd
+  branch:
+    description: branch
+    default: main
+  schedule_pause_status:
+    description: schedule pause status
+    default: UNPAUSED
+
+resources:
+  jobs:
+    hotel-reservation:
+      name: hotel-reservation-workflow-test-demo
+      schedule:
+        quartz_cron_expression: "0 0 6 ? * MON"
+        timezone_id: "Europe/Amsterdam"
+        pause_status: ${var.schedule_pause_status}
+      tags:
+        project_name: "hotel-reservation"
+      job_clusters:
+        - job_cluster_key: "Koen Koopen's Cluster"
+          new_cluster:
+            spark_version: "15.4.x-scala2.12"
+            data_security_mode: "SINGLE_USER"
+            node_type_id: "Standard_D4pds_v6"
+            driver_node_type_id: "Standard_D4pds_v6"
+            autoscale:
+              min_workers: 2
+              max_workers: 2
+
+      tasks:
+        - task_key: "preprocessing"
+          job_cluster_key: "Koen Koopen's Cluster"
+          spark_python_task:
+            python_file: "scripts/01.preprocessing.py"
+            parameters:
+              - "--root_path"
+              - ${workspace.root_path}
+              - "--env"
+              - ${bundle.target}
+          libraries:
+           - whl: ./dist/*.whl
+        - task_key: "train_model"
+          job_cluster_key: "Koen Koopen's Cluster"
+          depends_on:
+            - task_key: "preprocessing"
+          spark_python_task:
+            python_file: "scripts/02.train_register_fe_model.py"
+            parameters:
+              - "--root_path"
+              - ${workspace.root_path}
+              - "--env"
+              - ${bundle.target}
+              - "--git_sha"
+              - ${var.git_sha}
+              - "--job_run_id"
+              - "{{job.id}}"
+              - "--branch"
+              - ${var.branch}
+          libraries:
+            - whl: ./dist/*.whl
+        - task_key: model_updated
+          condition_task:
+            op: "EQUAL_TO"
+            left: "{{tasks.train_model.values.model_updated}}"
+            right: "1"
+          depends_on:
+            - task_key: "train_model"
+        - task_key: "deploy_model"
+          depends_on:
+            - task_key: "model_updated"
+              outcome: "true"
+          job_cluster_key: "Koen Koopen's Cluster"
+          spark_python_task:
+            python_file: "scripts/03.2. feature_serving.py"
+            parameters:
+              - "--root_path"
+              - ${workspace.root_path}
+              - "--env"
+              - ${bundle.target}
+          libraries:
+            - whl: ./dist/*.whl
+
 targets:
   dev:
-    mode: development
+    cluster_id: 0130-105030-r9dkz1h
     default: true
+    mode: development
     workspace:
       host: https://adb-2827555741900729.9.azuredatabricks.net
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: PAUSED
 
-  ## Optionally, there could be 'staging' or 'prod' targets here.
-  #
-  # prod:
-  #   workspace:
-  #     host: https://adb-2827555741900729.9.azuredatabricks.net
+  acc:
+    workspace:
+      host: https://adb-2827555741900729.9.azuredatabricks.net
+      root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: PAUSED
+
+  prd:
+    workspace:
+      host: https://adb-2827555741900729.9.azuredatabricks.net
+      root_path: /Shared/.bundle/${bundle.target}/${bundle.name}
+    variables:
+      schedule_pause_status: UNPAUSED
+
+  
