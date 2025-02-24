@@ -6,7 +6,8 @@ from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
@@ -190,7 +191,7 @@ class FeatureLookUpModel:
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         return predictions
-    
+
     def model_improved(self, test_set: DataFrame):
         """Evaluate the model performance on the test set."""
         X_test = test_set.drop(self.config.target)

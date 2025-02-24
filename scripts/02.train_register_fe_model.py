@@ -1,11 +1,11 @@
 import argparse
 
 import mlflow
+from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.models.feature_lookup_model import FeatureLookUpModel
-
 from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup model.")
@@ -61,6 +61,7 @@ config_path = f"{root_path}/files/project_config.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
 spark = SparkSession.builder.getOrCreate()
+dbutils = DBUtils(spark)
 tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
 tags = Tags(**tags_dict)
 

@@ -1,15 +1,15 @@
 prd:
   catalog_name: koen_prd
   schema_name: gold_hotel_reservations
-  pipeline_id: 
+  pipeline_id:
 acc:
   catalog_name: koen_acc
   schema_name: gold_hotel_reservations
-  pipeline_id: 
+  pipeline_id:
 dev:
   catalog_name: koen_dev
   schema_name: gold_hotel_reservations
-  pipeline_id: 
+  pipeline_id:
 
 parameters:
   min_samples_leaf: 1
