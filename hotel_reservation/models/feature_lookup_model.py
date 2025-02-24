@@ -38,7 +38,7 @@ class HotelReservationModelWrapper(mlflow.pyfunc.PythonModel):
 class FeatureLookUpModel:
     """Class for feature lookup."""
 
-    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession):
+    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession, code_path: list):
         """Initialize the FeatureLookUpModel class."""
         self.config = config
         self.spark = spark
@@ -53,7 +53,7 @@ class FeatureLookUpModel:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        self.code_paths = self.config.code_paths
+        self.code_paths = code_path
 
         # Define table names and function name
         self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reservation_features"

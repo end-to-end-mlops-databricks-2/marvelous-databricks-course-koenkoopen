@@ -95,7 +95,7 @@ class FeatureLookupServing:
             - A dictionary of predictions.
         """
         serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/{self.endpoint_name}/invocations"
-
+        logger.info(f"Calling endpoint {serving_endpoint}")
         # response = requests.post(
         #     serving_endpoint,
         #     headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
