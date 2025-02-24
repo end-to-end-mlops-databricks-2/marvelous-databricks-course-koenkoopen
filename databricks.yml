@@ -33,7 +33,7 @@ resources:
       tags:
         project_name: "hotel-reservation"
       job_clusters:
-        - job_cluster_key: "Koen Koopen's Cluster"
+        - job_cluster_key: "koen-mlops-cluster"
           new_cluster:
             spark_version: "15.4.x-scala2.12"
             data_security_mode: "SINGLE_USER"
@@ -45,7 +45,7 @@ resources:
 
       tasks:
         - task_key: "preprocessing"
-          job_cluster_key: "Koen Koopen's Cluster"
+          job_cluster_key: "koen-mlops-cluster"
           spark_python_task:
             python_file: "scripts/01.preprocessing.py"
             parameters:
@@ -56,7 +56,7 @@ resources:
           libraries:
            - whl: ./dist/*.whl
         - task_key: "train_model"
-          job_cluster_key: "Koen Koopen's Cluster"
+          job_cluster_key: "koen-mlops-cluster"
           depends_on:
             - task_key: "preprocessing"
           spark_python_task:
@@ -85,7 +85,7 @@ resources:
           depends_on:
             - task_key: "model_updated"
               outcome: "true"
-          job_cluster_key: "Koen Koopen's Cluster"
+          job_cluster_key: "koen-mlops-cluster"
           spark_python_task:
             python_file: "scripts/03.2. feature_serving.py"
             parameters:
