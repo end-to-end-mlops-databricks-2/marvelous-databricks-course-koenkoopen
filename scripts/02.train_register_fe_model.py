@@ -1,16 +1,67 @@
+import argparse
+
 import mlflow
 from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig, Tags
 from hotel_reservation.models.feature_lookup_model import FeatureLookUpModel
 
+from hotel_reservation.utils import configure_logging
+
+logger = configure_logging("Hotel Reservations feature lookup model.")
+
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
 mlflow.set_registry_uri("databricks-uc")
 
-config = ProjectConfig.from_yaml(config_path="../project_config.yml")
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--root_path",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--env",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--git_sha",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--job_run_id",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--branch",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+args = parser.parse_args()
+root_path = args.root_path
+config_path = f"{root_path}/files/project_config.yml"
+
+config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
 spark = SparkSession.builder.getOrCreate()
-tags_dict = {"git_sha": "4ce0950880b6fdade547501027c83efd6bc5ed86", "branch": "feature/week2_train_register_model"}
+tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
 tags = Tags(**tags_dict)
 
 # Initialize model
@@ -32,3 +83,23 @@ fe_model.train()
 
 # Register the model
 fe_model.register_model()
+
+# Evaluate model
+# Load test set from Delta table
+spark = SparkSession.builder.getOrCreate()
+test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_dataset").limit(100)
+# Drop feature lookup columns and target
+test_set = test_set.drop("no_of_adults", "no_of_children", "avg_price_per_room")
+
+model_improved = fe_model.model_improved(test_set=test_set)
+logger.info("Model evaluation completed, model improved: ", model_improved)
+
+if model_improved:
+    # Register the model
+    latest_version = fe_model.register_model()
+    logger.info("New model registered with version:", latest_version)
+    dbutils.jobs.taskValues.set(key="model_version", value=latest_version)
+    dbutils.jobs.taskValues.set(key="model_updated", value=1)
+
+else:
+    dbutils.jobs.taskValues.set(key="model_updated", value=0)
