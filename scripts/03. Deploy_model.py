@@ -1,5 +1,3 @@
-import os
-
 from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig
