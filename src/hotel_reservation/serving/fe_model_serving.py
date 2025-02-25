@@ -29,7 +29,7 @@ class FeatureLookupServing:
     def create_online_table(self):
         """Creates an online table for house features."""
         spec = OnlineTableSpec(
-            primary_key_columns=["Id"],
+            primary_key_columns=["Booking_ID"],
             source_table_full_name=self.feature_table_name,
             run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
             perform_full_copy=False,
