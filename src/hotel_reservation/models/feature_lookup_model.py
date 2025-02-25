@@ -1,26 +1,45 @@
 """Module with feature lookup functionalities for model registration."""
 
 import mlflow
+import numpy as np
+import pandas as pd
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
+from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
 from hotel_reservation.config import ProjectConfig, Tags
-from hotel_reservation.utils import configure_logging
+from hotel_reservation.utils import DropColumnsTransformer, configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
+
+
+class HotelReservationModelWrapper(mlflow.pyfunc.PythonModel):
+    """Class for the model wrapper."""
+
+    def __init__(self, model):
+        """Initialize the HotelReservationModelWrapper class."""
+        self.model = model
+
+    def predict(self, context, model_input: pd.DataFrame | np.ndarray):
+        """Make predictions using the model."""
+        predictions = self.model.predict(model_input)
+        return {"Prediction": predictions[0]}
 
 
 class FeatureLookUpModel:
     """Class for feature lookup."""
 
-    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession):
+    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession, code_path: list):
         """Initialize the FeatureLookUpModel class."""
         self.config = config
         self.spark = spark
@@ -35,6 +54,7 @@ class FeatureLookUpModel:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
+        self.code_paths = code_path
 
         # Define table names and function name
         self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reservation_features"
@@ -65,7 +85,7 @@ class FeatureLookUpModel:
         """Define a function to calculate cancellation_probability"""
         self.spark.sql(f"""
         CREATE OR REPLACE FUNCTION {self.function_name}(no_of_previous_cancellations DOUBLE, no_of_previous_bookings_not_canceled DOUBLE)
-        RETURNS INT
+        RETURNS DOUBLE
         LANGUAGE PYTHON AS
         $$
         if no_of_previous_bookings_not_canceled == 0:
@@ -81,6 +101,14 @@ class FeatureLookUpModel:
         """Load data from Databricks Delta tables."""
         self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_dataset").drop(
             "no_of_adults", "no_of_children", "avg_price_per_room"
+        )
+        self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_ID"].cast("string"))
+        self.train_set = self.train_set.withColumn(
+            "no_of_previous_cancellations", self.train_set["no_of_previous_cancellations"].cast("double")
+        )
+        self.train_set = self.train_set.withColumn(
+            "no_of_previous_bookings_not_canceled",
+            self.train_set["no_of_previous_bookings_not_canceled"].cast("double"),
         )
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
 
@@ -113,10 +141,9 @@ class FeatureLookUpModel:
         self.test_set["cancellation_probability"] = (
             self.test_set["no_of_previous_cancellations"] / self.test_set["no_of_previous_bookings_not_canceled"]
         )
-
-        self.X_train = self.training_df[self.features_used + ["cancellation_probability"]]
+        self.X_train = self.training_df
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.features_used + ["cancellation_probability"]]
+        self.X_test = self.test_set
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
@@ -125,16 +152,41 @@ class FeatureLookUpModel:
         """Train the model and log results to MLflow."""
         logger.info("🚀 Starting training...")
 
-        rf_model = HistGradientBoostingClassifier(
+        gb_model = HistGradientBoostingClassifier(
             learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"]
         )
 
+        # Define the log transformer using FunctionTransformer
+        log_transformer = FunctionTransformer(np.log1p, validate=True)
+
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols),
+                ("num", MinMaxScaler(), self.num_features),
+                ("log", log_transformer, self.num_features),
+                (
+                    "drop",
+                    DropColumnsTransformer(columns_to_drop=self.config.columns_to_drop),
+                    self.config.columns_to_drop,
+                ),
+            ],
+            remainder="passthrough",
+        )
+
+        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", gb_model)])
+
         mlflow.set_experiment(self.experiment_name)
+        mlflow.sklearn.autolog()
+
+        additional_pip_deps = ["pyspark==3.5.0"]
+        for package in self.code_paths:
+            whl_name = package.split("/")[-1]
+            additional_pip_deps.append(f"code/{whl_name}")
 
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
-            rf_model.fit(self.X_train, self.y_train)
-            y_pred = rf_model.predict(self.X_test)
+            pipeline.fit(self.X_train, self.y_train)
+            y_pred = pipeline.predict(self.X_test)
 
             mse = mean_squared_error(self.y_test, y_pred)
             mae = mean_absolute_error(self.y_test, y_pred)
@@ -150,16 +202,26 @@ class FeatureLookUpModel:
             mlflow.log_metric("mae", mae)
             mlflow.log_metric("r2_score", r2)
 
-            signature = infer_signature(self.X_test, y_pred)
+            signature = infer_signature(self.X_train, y_pred)
 
-            mlflow.sklearn.log_model(rf_model, "HistGradientBoostingClassifier-model-fe", signature=signature)
+            logger.info(f"Adding conda env with packages: {additional_pip_deps}")
+            conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
+
+            mlflow.sklearn.log_model(
+                HotelReservationModelWrapper(pipeline),
+                "HistGradientBoostingClassifier-model-fe",
+                conda_env=conda_env,
+                code_paths=self.code_paths,
+                signature=signature,
+            )
 
             self.fe.log_model(
-                model=rf_model,
+                model=HotelReservationModelWrapper(pipeline),
                 flavor=mlflow.sklearn,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
-                infer_input_example=True,
+                signature=signature,
+                # infer_input_example=True,
             )
         logger.info("Ended training.")
 
