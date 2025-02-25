@@ -355,26 +355,6 @@ wheels = [
 ]
 
 [[package]]
-name = "databricks-feature-lookup"
-version = "1.2.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "azure-cosmos" },
-    { name = "boto3" },
-    { name = "mlflow" },
-    { name = "numpy" },
-    { name = "pyarrow" },
-    { name = "pymysql" },
-    { name = "pyyaml" },
-    { name = "requests" },
-    { name = "sqlalchemy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/67/0c/ed94bce5fd98224a238bfd6bf7fab6a4dfc529c58bb8287f8d1c7612d3a3/databricks-feature-lookup-1.2.0.tar.gz", hash = "sha256:34213e9889367de80fecdd1d5ccf43791fc330ec4d2bfafd710dbb262157752c", size = 72520 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/16/d5464c1d6a11896d956dd9b9854c7072ca87333a8d788e3bd176b062bcf5/databricks_feature_lookup-1.2.0-py3-none-any.whl", hash = "sha256:d3f9336192ea6f293d587caf3a0805c29081754319fea43f22d6951c3a4af10d", size = 98113 },
-]
-
-[[package]]
 name = "databricks-sdk"
 version = "0.32.0"
 source = { registry = "https://pypi.org/simple" }
@@ -721,14 +701,13 @@ wheels = [
 ]
 
 [[package]]
-name = "housing-price"
+name = "hotel-reservation"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "cffi" },
     { name = "cloudpickle" },
     { name = "databricks-feature-engineering" },
-    { name = "databricks-feature-lookup" },
     { name = "databricks-sdk" },
     { name = "lightgbm" },
     { name = "matplotlib" },
@@ -756,7 +735,6 @@ requires-dist = [
     { name = "cloudpickle", specifier = "==3.1.0" },
     { name = "databricks-connect", marker = "extra == 'dev'", specifier = ">=15.4.1,<16" },
     { name = "databricks-feature-engineering", specifier = "==0.6" },
-    { name = "databricks-feature-lookup", specifier = "==1.2.0" },
     { name = "databricks-sdk", specifier = "==0.32.0" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = ">=6.29.5,<7" },
     { name = "lightgbm", specifier = "==4.5.0" },
