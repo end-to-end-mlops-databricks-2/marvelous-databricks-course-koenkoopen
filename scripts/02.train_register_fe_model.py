@@ -70,7 +70,7 @@ fe_model = FeatureLookUpModel(
     config=config,
     tags=tags,
     spark=spark,
-    code_path=[f"{root_path}/artifacts/.internal/hotel_reservation-0.0.22-py3-none-any.whl"],
+    code_path=[f"{root_path}/artifacts/.internal/hotel_reservation-0.1.0-py3-none-any.whl"],
 )
 # Create feature table
 fe_model.create_feature_table()
