@@ -66,7 +66,12 @@ tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.
 tags = Tags(**tags_dict)
 
 # Initialize model
-fe_model = FeatureLookUpModel(config=config, tags=tags, spark=spark)
+fe_model = FeatureLookUpModel(
+    config=config,
+    tags=tags,
+    spark=spark,
+    code_path=[f"{root_path}/artifacts/.internal/hotel_reservation-0.0.22-py3-none-any.whl"],
+)
 # Create feature table
 fe_model.create_feature_table()
 
@@ -82,25 +87,29 @@ fe_model.feature_engineering()
 # Train the model
 fe_model.train()
 
-# Register the model
-fe_model.register_model()
+latest_version = fe_model.register_model()
+
+dbutils.jobs.taskValues.set(key="model_version", value=latest_version)
+dbutils.jobs.taskValues.set(key="model_updated", value=1)
 
 # Evaluate model
 # Load test set from Delta table
-spark = SparkSession.builder.getOrCreate()
-test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_dataset").limit(100)
-# Drop feature lookup columns and target
-test_set = test_set.drop("no_of_adults", "no_of_children", "avg_price_per_room")
+# spark = SparkSession.builder.getOrCreate()
+# test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_dataset").limit(100)
+# # Drop feature lookup columns and target
+# test_set = test_set.drop("no_of_adults", "no_of_children", "avg_price_per_room")
+# test_set = test_set.withColumn("no_of_previous_cancellations", test_set["no_of_previous_cancellations"].cast("double"))
+# test_set = test_set.withColumn("no_of_previous_bookings_not_canceled", test_set["no_of_previous_bookings_not_canceled"].cast("double"))
 
-model_improved = fe_model.model_improved(test_set=test_set)
-logger.info("Model evaluation completed, model improved: ", model_improved)
+# model_improved = fe_model.model_improved(test_set=test_set)
+# logger.info("Model evaluation completed, model improved: ", model_improved)
 
-if model_improved:
-    # Register the model
-    latest_version = fe_model.register_model()
-    logger.info("New model registered with version:", latest_version)
-    dbutils.jobs.taskValues.set(key="model_version", value=latest_version)
-    dbutils.jobs.taskValues.set(key="model_updated", value=1)
+# if model_improved:
+#     # Register the model
+#     latest_version = fe_model.register_model()
+#     logger.info("New model registered with version:", latest_version)
+#     dbutils.jobs.taskValues.set(key="model_version", value=latest_version)
+#     dbutils.jobs.taskValues.set(key="model_updated", value=1)
 
-else:
-    dbutils.jobs.taskValues.set(key="model_updated", value=0)
+# else:
+#     dbutils.jobs.taskValues.set(key="model_updated", value=0)

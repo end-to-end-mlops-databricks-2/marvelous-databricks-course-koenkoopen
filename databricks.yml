@@ -87,7 +87,7 @@ resources:
               outcome: "true"
           job_cluster_key: "MLOps-compute"
           spark_python_task:
-            python_file: "scripts/03.2. feature_serving.py"
+            python_file: "scripts/03. Deploy_model.py"
             parameters:
               - "--root_path"
               - ${workspace.root_path}

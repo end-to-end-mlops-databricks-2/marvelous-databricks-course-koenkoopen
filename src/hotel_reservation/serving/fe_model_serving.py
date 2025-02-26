@@ -1,6 +1,7 @@
 """Module for feature lookup serving."""
 
 import os
+import time
 
 import mlflow
 import requests
@@ -40,6 +41,30 @@ class FeatureLookupServing:
             self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
         except Exception:
             logger.warning(f"Online table {self.online_table_name} already exists.")
+
+    def update_online_table(self, config):
+        """Triggers a Databricks pipeline update and monitors its state."""
+
+        update_response = self.workspace.pipelines.start_update(pipeline_id=config.pipeline_id, full_refresh=False)
+
+        while True:
+            update_info = self.workspace.pipelines.get_update(
+                pipeline_id=config.pipeline_id, update_id=update_response.update_id
+            )
+            state = update_info.update.state.value
+
+            if state == "COMPLETED":
+                logger.info("Pipeline update completed successfully.")
+                break
+            elif state in ["FAILED", "CANCELED"]:
+                logger.error("Pipeline update failed.")
+                raise SystemError("Online table failed to update.")
+            elif state == "WAITING_FOR_RESOURCES":
+                logger.warning("Pipeline is waiting for resources.")
+            else:
+                logger.info(f"Pipeline is in {state} state.")
+
+            time.sleep(30)
 
     def get_latest_model_version(self):
         """Returns the latest model version."""

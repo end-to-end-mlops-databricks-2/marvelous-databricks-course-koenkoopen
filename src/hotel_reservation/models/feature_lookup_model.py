@@ -10,7 +10,6 @@ from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
@@ -111,7 +110,10 @@ class FeatureLookUpModel:
             self.train_set["no_of_previous_bookings_not_canceled"].cast("double"),
         )
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_dataset").toPandas()
-
+        self.test_set["no_of_previous_cancellations"] = self.test_set["no_of_previous_cancellations"].astype("float")
+        self.test_set["no_of_previous_bookings_not_canceled"] = self.test_set[
+            "no_of_previous_bookings_not_canceled"
+        ].astype("float")
         logger.info("✅ Data successfully loaded.")
 
     def feature_engineering(self):
@@ -226,7 +228,11 @@ class FeatureLookUpModel:
         logger.info("Ended training.")
 
     def register_model(self):
-        """Register the model with MLflow."""
+        """Register the model with MLflow.
+
+        Returns:
+            - latest_version (str): The latest version of the registered model.
+        """
         registered_model = mlflow.register_model(
             model_uri=f"runs:/{self.run_id}/HistGradientBoostingClassifier-model-fe",
             name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model_fe",
@@ -242,6 +248,7 @@ class FeatureLookUpModel:
             alias="latest-model",
             version=latest_version,
         )
+        return latest_version
 
     def load_latest_model_and_predict(self, X):
         """Load the trained model from MLflow using Feature Engineering Client and make predictions.
@@ -262,31 +269,27 @@ class FeatureLookUpModel:
             "prediction", "prediction_latest"
         )
 
-        current_model_uri = f"runs:/{self.run_id}/hotel_reservation_model_fe"
+        current_model_uri = f"runs:/{self.run_id}/HistGradientBoostingClassifier-model-fe"
         predictions_current = self.fe.score_batch(model_uri=current_model_uri, df=X_test).withColumnRenamed(
             "prediction", "prediction_current"
         )
 
         test_set = test_set.select("Booking_ID", "booking_status")
 
-        logger.info("Predictions are ready.")
-
         # Join the DataFrames on the 'id' column
         df = test_set.join(predictions_current, on="Booking_ID").join(predictions_latest, on="Booking_ID")
-
         # Calculate the absolute error for each model
-        df = df.withColumn("error_current", F.abs(df["booking_status"] - df["prediction_current"]))
-        df = df.withColumn("error_latest", F.abs(df["booking_status"] - df["prediction_latest"]))
+        df_pandas = df.toPandas()
 
         # Calculate the Mean Absolute Error (MAE) for each model
-        mae_current = df.agg(F.mean("error_current")).collect()[0][0]
-        mae_latest = df.agg(F.mean("error_latest")).collect()[0][0]
+        mse_latest = mean_squared_error(df_pandas["booking_status"], df_pandas["prediction_latest"])
+        mse_current = mean_squared_error(df_pandas["booking_status"], df_pandas["prediction_current"])
 
         # Compare models based on MAE
-        logger.info(f"MAE for Current Model: {mae_current}")
-        logger.info(f"MAE for Latest Model: {mae_latest}")
+        logger.info(f"MSE for Current Model: {mse_current}")
+        logger.info(f"MSE for Latest Model: {mse_latest}")
 
-        if mae_current < mae_latest:
+        if mse_current < mse_latest:
             logger.info("Current Model performs better. Registering new model.")
             return True
         else:
