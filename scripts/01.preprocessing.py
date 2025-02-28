@@ -1,11 +1,34 @@
+import argparse
+
 from pyspark.sql import SparkSession
 
 from hotel_reservation.config import ProjectConfig
 from hotel_reservation.preprocessing import DataProcessor
 from hotel_reservation.utils import configure_logging
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--root_path",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--env",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+args = parser.parse_args()
+root_path = args.root_path
+config_path = f"{root_path}/files/project_config.yml"
+
 # Load configuration
-config = ProjectConfig.from_yaml(config_path="../project_config.yml")
+config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
 logger = configure_logging("Hotel Reservations Preprocessing")
 
 logger.info("Configuration loaded")

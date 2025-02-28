@@ -4,8 +4,26 @@ import logging
 import os
 import sys
 
-import numpy as np
-import pandas as pd
+from sklearn.base import BaseEstimator, TransformerMixin
+
+
+class DropColumnsTransformer(BaseEstimator, TransformerMixin):
+    """Transformer class to drop columns in sklearn pipeline."""
+
+    def __init__(self, columns_to_drop):
+        self.columns_to_drop = columns_to_drop
+
+    def fit(self, X, y=None):
+        """Fit the transformer."""
+        # No fitting needed for dropping columns, just return self
+        return self
+
+    def transform(self, X):
+        """Transform the input DataFrame by dropping the specified columns."""
+        # Drop the specified columns and return the transformed DataFrame
+        X_copy = X.copy()
+        X_copy.drop(columns=self.columns_to_drop, inplace=True)
+        return X_copy
 
 
 def configure_logging(name, log_file_path=None):
@@ -50,19 +68,3 @@ def configure_logging(name, log_file_path=None):
         logger.addHandler(file_handler)
 
     return logger
-
-
-def log_transform(df: pd.DataFrame, col_names: list) -> pd.DataFrame:
-    """Log transform column col_name in Pandas DataFrame df.
-
-    Args:
-        df (pd.DataFrame): The Pandas DataFrame to transform.
-        col_name (list): A list of strings, each representing the name of the column to transform.
-
-    Returns:
-        df: A new Pandas DataFrame with the transformed columns.
-    """
-    df_copy = df.copy()
-    for col in col_names:
-        df_copy[col] = np.log1p(df_copy[col])
-    return df_copy

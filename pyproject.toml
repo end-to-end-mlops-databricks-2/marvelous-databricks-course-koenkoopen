@@ -1,5 +1,5 @@
 [project]
-name = "hotel-reservation"
+name = "hotel_reservation"
 version = "0.0.1"
 description = "Hotel reservations project"
 requires-python = ">=3.11, <3.12"
@@ -34,7 +34,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where =["hotel_reservation"]
+where =["src"]
 include = ["hotel_reservation*"]
 
 [tool.ruff]

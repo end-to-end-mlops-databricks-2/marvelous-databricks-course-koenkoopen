@@ -1,3 +1,4 @@
+import argparse
 import os
 import time
 
@@ -13,12 +14,38 @@ from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations Deploy Model")
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--root_path",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+parser.add_argument(
+    "--env",
+    action="store",
+    default=None,
+    type=str,
+    required=True,
+)
+
+args = parser.parse_args()
+root_path = args.root_path
+config_path = f"{root_path}/files/project_config.yml"
+
 # Load project config
-config = ProjectConfig.from_yaml(config_path="../project_config.yml")
+config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
 
 # COMMAND ----------
 spark = SparkSession.builder.getOrCreate()
 dbutils = DBUtils(spark)
+model_version = dbutils.jobs.taskValues.get(taskKey="train_model", key="model_version")
+
+catalog_name = config.catalog_name
+schema_name = config.schema_name
+endpoint_name = f"hotel_reservation_model_fe-{args.env}"
 
 fe = feature_engineering.FeatureEngineeringClient()
 mlflow.set_registry_uri("databricks-uc")

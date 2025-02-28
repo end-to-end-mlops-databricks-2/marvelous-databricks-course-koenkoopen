@@ -1,5 +1,6 @@
 """Module with data preprocessing functions."""
 
+import time
 from typing import Tuple
 
 import numpy as np
@@ -7,10 +8,10 @@ import pandas as pd
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import LabelEncoder
 
 from hotel_reservation.config import ProjectConfig
-from hotel_reservation.utils import configure_logging, log_transform
+from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations")
 
@@ -89,11 +90,7 @@ class DataProcessor:
 
         self.df = self.df[relevant_columns]
         self.compute_quarters("arrival_month")
-        self.df = log_transform(self.df, num_features)
-        self.one_hot_encode()
-        self.scale_numeric_features()
         self.label_encode()
-        self.df = self.df.drop(self.config.columns_to_drop, axis=1)
         self.df.columns = self.df.columns.str.replace(" ", "_")
 
     def compute_quarters(self, month_column: str = "arrival_month"):
@@ -114,19 +111,6 @@ class DataProcessor:
             logger.error(f"Unexpected error occurred while computing quarters: {e}")
             raise Exception(f"Unexpected error occurred while computing quarters: {e}") from e
 
-    def one_hot_encode(self):
-        """One hot encodes the categorical features."""
-        logger.info("One hot encoding categorical features...")
-        try:
-            one_hot_encode_cols = self.config.one_hot_encode_cols
-            self.df = pd.get_dummies(self.df, columns=one_hot_encode_cols, drop_first=True, dtype=int)
-        except KeyError as e:
-            logger.error(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}")
-            raise KeyError(f"One of the columns {one_hot_encode_cols} does not exist in the DataFrame: {e}") from e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred while one hot encoding: {e}")
-            raise Exception(f"Unexpected error occurred while one hot encoding: {e}") from e
-
     def label_encode(self):
         """Label encode the target variable."""
         logger.info("Label encoding target variable...")
@@ -140,24 +124,6 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error occurred while label encoding: {e}")
             raise Exception(f"Unexpected error occurred while label encoding: {e}") from e
-
-    def scale_numeric_features(self):
-        """Scale the numeric features using the MinMaxScaler."""
-        logger.info("Scaling numeric features...")
-        try:
-            num_features = self.config.num_features
-            scaler = MinMaxScaler()
-            self.df[num_features] = scaler.fit_transform(self.df[num_features])
-        except KeyError as e:
-            logger.error(
-                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
-            )
-            raise KeyError(
-                f"One of the numeric columns {num_features} does not exist in the DataFrame, so cannot be scaled: {e}"
-            ) from e
-        except Exception as e:
-            logger.error(f"Unexpected error occurred while scaling numeric features: {e}")
-            raise Exception(f"Unexpected error occurred while scaling numeric features: {e}") from e
 
     def split_data(self, test_size=0.2, random_state=42) -> Tuple[np.ndarray, np.ndarray]:
         """Split the DataFrame (self.df) into training and test sets.
@@ -204,3 +170,55 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error occurred while saving to Databricks tables: {e}")
             raise Exception(f"Unexpected error occurred while saving to Databricks tables: {e}") from e
+
+    def enable_change_data_feed(self):
+        self.spark.sql(
+            f"ALTER TABLE {self.config.catalog_name}.{self.config.schema_name}.train_dataset "
+            "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
+        )
+
+        self.spark.sql(
+            f"ALTER TABLE {self.config.catalog_name}.{self.config.schema_name}.test_dataset "
+            "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
+        )
+
+
+def generate_synthetic_data(df, config, num_rows=10):
+    """Generates synthetic data based on the distribution of the input DataFrame."""
+    synthetic_data = pd.DataFrame()
+
+    for column in df.columns:
+        if column == "Booking_ID":
+            continue
+
+        if pd.api.types.is_numeric_dtype(df[column]):
+            if column in {"YearBuilt", "YearRemodAdd"}:  # Handle year-based columns separately
+                synthetic_data[column] = np.random.randint(df[column].min(), df[column].max() + 1, num_rows)
+            else:
+                synthetic_data[column] = np.random.normal(df[column].mean(), df[column].std(), num_rows)
+
+        elif pd.api.types.is_categorical_dtype(df[column]) or pd.api.types.is_object_dtype(df[column]):
+            synthetic_data[column] = np.random.choice(
+                df[column].unique(), num_rows, p=df[column].value_counts(normalize=True)
+            )
+
+        elif pd.api.types.is_datetime64_any_dtype(df[column]):
+            min_date, max_date = df[column].min(), df[column].max()
+            synthetic_data[column] = pd.to_datetime(
+                np.random.randint(min_date.value, max_date.value, num_rows)
+                if min_date < max_date
+                else [min_date] * num_rows
+            )
+
+        else:
+            synthetic_data[column] = np.random.choice(df[column], num_rows)
+
+    # Convert relevant numeric columns to integers
+    int_columns = config.num_features
+    for col in int_columns.intersection(df.columns):
+        synthetic_data[col] = synthetic_data[col].astype(np.int32)
+
+    timestamp_base = int(time.time() * 1000)
+    synthetic_data["Booking_ID"] = [str(timestamp_base + i) for i in range(num_rows)]
+
+    return synthetic_data
