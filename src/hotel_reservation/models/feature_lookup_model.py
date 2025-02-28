@@ -8,7 +8,6 @@ from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
-from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import DataFrame, SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -38,7 +37,7 @@ class HotelReservationModelWrapper(mlflow.pyfunc.PythonModel):
 class FeatureLookUpModel:
     """Class for feature lookup."""
 
-    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession, code_path: list):
+    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession):
         """Initialize the FeatureLookUpModel class."""
         self.config = config
         self.spark = spark
@@ -53,7 +52,7 @@ class FeatureLookUpModel:
         self.parameters = self.config.parameters
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
-        self.code_paths = code_path
+        # self.code_paths = code_path
 
         # Define table names and function name
         self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reservation_features"
@@ -178,12 +177,12 @@ class FeatureLookUpModel:
         pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", gb_model)])
 
         mlflow.set_experiment(self.experiment_name)
-        mlflow.sklearn.autolog()
+        # mlflow.sklearn.autolog()
 
-        additional_pip_deps = ["pyspark==3.5.0"]
-        for package in self.code_paths:
-            whl_name = package.split("/")[-1]
-            additional_pip_deps.append(f"code/{whl_name}")
+        # additional_pip_deps = ["pyspark==3.5.0"]
+        # for package in self.code_paths:
+        #     whl_name = package.split("/")[-1]
+        #     additional_pip_deps.append(f"code/{whl_name}")
 
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
@@ -206,14 +205,14 @@ class FeatureLookUpModel:
 
             signature = infer_signature(self.X_train, y_pred)
 
-            logger.info(f"Adding conda env with packages: {additional_pip_deps}")
-            conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
+            # logger.info(f"Adding conda env with packages: {additional_pip_deps}")
+            # conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
 
             mlflow.sklearn.log_model(
                 HotelReservationModelWrapper(pipeline),
                 "HistGradientBoostingClassifier-model-fe",
-                conda_env=conda_env,
-                code_paths=self.code_paths,
+                # conda_env=conda_env,
+                # code_paths=self.code_paths,
                 signature=signature,
             )
 

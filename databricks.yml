@@ -35,13 +35,13 @@ resources:
       job_clusters:
         - job_cluster_key: "MLOps-compute"
           new_cluster:
-            spark_version: "15.4.x-scala2.12"
+            spark_version: "15.4.x-cpu-ml-scala2.12"
             data_security_mode: "SINGLE_USER"
-            node_type_id: "Standard_D4pds_v6"
-            driver_node_type_id: "Standard_D4pds_v6"
+            node_type_id: "Standard_D8pds_v6"
+            driver_node_type_id: "Standard_D8pds_v6"
             autoscale:
               min_workers: 2
-              max_workers: 2
+              max_workers: 8
 
       tasks:
         - task_key: "preprocessing"
