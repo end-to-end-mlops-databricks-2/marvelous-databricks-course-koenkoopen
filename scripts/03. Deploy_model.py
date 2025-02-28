@@ -41,7 +41,7 @@ spark = SparkSession.builder.getOrCreate()
 
 catalog_name = config.catalog_name
 schema_name = config.schema_name
-endpoint_name = f"hotel_reservation_endpoint_koen-{args.env}"
+endpoint_name = f"hotel_reservation_endpoint-{args.env}"
 
 # Initialize feature store manager
 feature_serving_manager = FeatureLookupServing(
