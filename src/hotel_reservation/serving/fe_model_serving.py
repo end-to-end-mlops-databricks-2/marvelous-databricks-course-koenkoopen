@@ -11,7 +11,7 @@ from databricks.sdk.service.catalog import (
 )
 from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
 
-from hotel_reservation.utils import configure_logging
+from src.hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations Feature Serving.")
 

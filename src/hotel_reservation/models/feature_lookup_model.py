@@ -15,8 +15,8 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
-from hotel_reservation.config import ProjectConfig, Tags
-from hotel_reservation.utils import DropColumnsTransformer, configure_logging
+from src.hotel_reservation.config import ProjectConfig, Tags
+from src.hotel_reservation.utils import DropColumnsTransformer, configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
 
