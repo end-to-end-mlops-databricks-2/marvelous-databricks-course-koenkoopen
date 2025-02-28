@@ -8,7 +8,6 @@ from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
-from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -177,7 +176,7 @@ class FeatureLookUpModel:
         logger.info(f"🚀 Starting experiment {self.experiment_name}...")
 
         with mlflow.start_run(tags=self.tags) as run:
-            logger.info(f'Start experiment run {run.info.run_id}')
+            logger.info(f"Start experiment run {run.info.run_id}")
             self.run_id = run.info.run_id
             pipeline.fit(self.X_train, self.y_train)
             y_pred = pipeline.predict(self.X_test)
