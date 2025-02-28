@@ -13,7 +13,7 @@ spark = SparkSession.builder.getOrCreate()
 
 # Initialize feature store manager
 feature_serving_manager = FeatureLookupServing(
-    model_name=f"{config.catalog_name}.{config.schema_name}.hotel_reservation_model_fe",
+    model_name=f"{config.catalog_name}.{config.schema_name}.hotel_reservation_model",
     endpoint_name="hotel_reservation_endpoint",
     feature_table_name=f"{config.catalog_name}.{config.schema_name}.hotel_reservation_features",
 )
