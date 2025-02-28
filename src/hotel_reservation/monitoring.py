@@ -9,9 +9,7 @@ from pyspark.sql.types import ArrayType, DoubleType, IntegerType, StringType, St
 
 
 def create_or_refresh_monitoring(config, spark, workspace):
-    inf_table = spark.sql(
-        f"SELECT * FROM {config.catalog_name}.{config.schema_name}.`model-serving-fe_payload_payload`"
-    )
+    inf_table = spark.sql(f"SELECT * FROM {config.catalog_name}.{config.schema_name}.`model-serving-fe_payload`")
 
     request_schema = StructType(
         [
@@ -20,32 +18,25 @@ def create_or_refresh_monitoring(config, spark, workspace):
                 ArrayType(
                     StructType(
                         [
-                            StructField("LotFrontage", DoubleType(), True),
-                            StructField("LotArea", IntegerType(), True),
-                            StructField("OverallCond", IntegerType(), True),
-                            StructField("YearBuilt", IntegerType(), True),
-                            StructField("YearRemodAdd", IntegerType(), True),
-                            StructField("MasVnrArea", DoubleType(), True),
-                            StructField("TotalBsmtSF", IntegerType(), True),
-                            StructField("MSZoning", StringType(), True),
-                            StructField("Street", StringType(), True),
-                            StructField("Alley", StringType(), True),
-                            StructField("LotShape", StringType(), True),
-                            StructField("LandContour", StringType(), True),
-                            StructField("Neighborhood", StringType(), True),
-                            StructField("Condition1", StringType(), True),
-                            StructField("BldgType", StringType(), True),
-                            StructField("HouseStyle", StringType(), True),
-                            StructField("RoofStyle", StringType(), True),
-                            StructField("Exterior1st", StringType(), True),
-                            StructField("Exterior2nd", StringType(), True),
-                            StructField("MasVnrType", StringType(), True),
-                            StructField("Foundation", StringType(), True),
-                            StructField("Heating", StringType(), True),
-                            StructField("CentralAir", StringType(), True),
-                            StructField("SaleType", StringType(), True),
-                            StructField("SaleCondition", StringType(), True),
-                            StructField("Id", StringType(), True),
+                            StructField("no_of_adults", IntegerType(), True),
+                            StructField("no_of_children", IntegerType(), True),
+                            StructField("no_of_weekend_nights", IntegerType(), True),
+                            StructField("no_of_week_nights", IntegerType(), True),
+                            StructField("type_of_meal_plan", StringType(), True),
+                            StructField("required_car_parking_space", IntegerType(), True),
+                            StructField("room_type_reserved", StringType(), True),
+                            StructField("lead_time", IntegerType(), True),
+                            StructField("arrival_year", IntegerType(), True),
+                            StructField("arrival_month", IntegerType(), True),
+                            StructField("arrival_date", IntegerType(), True),
+                            StructField("market_segment_type", StringType(), True),
+                            StructField("repeated_guest", IntegerType(), True),
+                            StructField("no_of_previous_cancellations", IntegerType(), True),
+                            StructField("no_of_previous_bookings_not_canceled", IntegerType(), True),
+                            StructField("avg_price_per_room", DoubleType(), True),
+                            StructField("no_of_special_requests", IntegerType(), True),
+                            StructField("booking_status", StringType(), True),
+                            StructField("Booking_ID", StringType(), True),
                         ]
                     )
                 ),
@@ -78,56 +69,53 @@ def create_or_refresh_monitoring(config, spark, workspace):
         "timestamp_ms",
         "databricks_request_id",
         "execution_time_ms",
-        F.col("record.Id").alias("Id"),
-        F.col("record.LotFrontage").alias("LotFrontage"),
-        F.col("record.LotArea").alias("LotArea"),
-        F.col("record.OverallCond").alias("OverallCond"),
-        F.col("record.YearBuilt").alias("YearBuilt"),
-        F.col("record.YearRemodAdd").alias("YearRemodAdd"),
-        F.col("record.MasVnrArea").alias("MasVnrArea"),
-        F.col("record.TotalBsmtSF").alias("TotalBsmtSF"),
-        F.col("record.MSZoning").alias("MSZoning"),
-        F.col("record.Street").alias("Street"),
-        F.col("record.Alley").alias("Alley"),
-        F.col("record.LotShape").alias("LotShape"),
-        F.col("record.LandContour").alias("LandContour"),
-        F.col("record.Neighborhood").alias("Neighborhood"),
-        F.col("record.Condition1").alias("Condition1"),
-        F.col("record.BldgType").alias("BldgType"),
-        F.col("record.HouseStyle").alias("HouseStyle"),
-        F.col("record.RoofStyle").alias("RoofStyle"),
-        F.col("record.Exterior1st").alias("Exterior1st"),
-        F.col("record.Exterior2nd").alias("Exterior2nd"),
-        F.col("record.MasVnrType").alias("MasVnrType"),
-        F.col("record.Foundation").alias("Foundation"),
-        F.col("record.Heating").alias("Heating"),
-        F.col("record.CentralAir").alias("CentralAir"),
-        F.col("record.SaleType").alias("SaleType"),
-        F.col("record.SaleCondition").alias("SaleCondition"),
+        F.col("record.Booking_ID").alias("Booking_ID"),
+        F.col("record.no_of_adults").alias("no_of_adults"),
+        F.col("record.no_of_children").alias("no_of_children"),
+        F.col("record.no_of_weekend_nights").alias("no_of_weekend_nights"),
+        F.col("record.no_of_week_nights").alias("no_of_week_nights"),
+        F.col("record.type_of_meal_plan").alias("type_of_meal_plan"),
+        F.col("record.required_car_parking_space").alias("required_car_parking_space"),
+        F.col("record.room_type_reserved").alias("room_type_reserved"),
+        F.col("record.lead_time").alias("lead_time"),
+        F.col("record.arrival_year").alias("arrival_year"),
+        F.col("record.arrival_month").alias("arrival_month"),
+        F.col("record.arrival_date").alias("arrival_date"),
+        F.col("record.market_segment_type").alias("market_segment_type"),
+        F.col("record.repeated_guest").alias("repeated_guest"),
+        F.col("record.no_of_previous_cancellations").alias("no_of_previous_cancellations"),
+        F.col("record.no_of_previous_bookings_not_canceled").alias("no_of_previous_bookings_not_canceled"),
+        F.col("record.avg_price_per_room").alias("avg_price_per_room"),
+        F.col("record.no_of_special_requests").alias("no_of_special_requests"),
+        F.col("record.booking_status").alias("booking_status"),
         F.col("parsed_response.predictions")[0].alias("prediction"),
-        F.lit("house-prices-model-fe").alias("model_name"),
+        F.lit("hotel-reservations-fe").alias("model_name"),
     )
 
-    test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_set")
+    test_set = spark.table(f"{config.catalog_name}.{config.schema_name}.test_dataset")
     inference_set_skewed = spark.table(f"{config.catalog_name}.{config.schema_name}.inference_data_skewed")
 
     df_final_with_status = (
-        df_final.join(test_set.select("Id", "SalePrice"), on="Id", how="left")
-        .withColumnRenamed("SalePrice", "sale_price_test")
-        .join(inference_set_skewed.select("Id", "SalePrice"), on="Id", how="left")
-        .withColumnRenamed("SalePrice", "sale_price_inference")
-        .select("*", F.coalesce(F.col("sale_price_test"), F.col("sale_price_inference")).alias("sale_price"))
-        .drop("sale_price_test", "sale_price_inference")
-        .withColumn("sale_price", F.col("sale_price").cast("double"))
+        df_final.join(test_set.select("Booking_ID", "booking_status"), on="Booking_ID", how="left")
+        .withColumnRenamed("booking_status", "booking_status_test")
+        .join(inference_set_skewed.select("Booking_ID", "booking_status"), on="Booking_ID", how="left")
+        .withColumnRenamed("booking_status", "booking_status_inference")
+        .select(
+            "*", F.coalesce(F.col("booking_status_test"), F.col("booking_status_inference")).alias("booking_status")
+        )
+        .drop("booking_status_test", "booking_status_inference")
+        .withColumn("booking_status", F.col("booking_status").cast("double"))
         .withColumn("prediction", F.col("prediction").cast("double"))
-        .dropna(subset=["sale_price", "prediction"])
+        .dropna(subset=["booking_status", "prediction"])
     )
 
-    house_features = spark.table(f"{config.catalog_name}.{config.schema_name}.house_features")
+    hotel_features = spark.table(f"{config.catalog_name}.{config.schema_name}.hotel_reservation_features")
 
-    df_final_with_features = df_final_with_status.join(house_features, on="Id", how="left")
+    df_final_with_features = df_final_with_status.join(hotel_features, on="Booking_ID", how="left")
 
-    df_final_with_features = df_final_with_features.withColumn("GrLivArea", F.col("GrLivArea").cast("double"))
+    df_final_with_features = df_final_with_features.withColumn(
+        "avg_price_per_room", F.col("avg_price_per_room").cast("double")
+    )
 
     df_final_with_features.write.format("delta").mode("append").saveAsTable(
         f"{config.catalog_name}.{config.schema_name}.model_monitoring"
@@ -159,7 +147,7 @@ def create_monitoring_table(config, spark, workspace):
             timestamp_col="timestamp",
             granularities=["30 minutes"],
             model_id_col="model_name",
-            label_col="sale_price",
+            label_col="booking_status",
         ),
     )
 
