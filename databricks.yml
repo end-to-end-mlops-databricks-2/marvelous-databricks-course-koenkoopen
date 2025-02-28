@@ -53,8 +53,6 @@ resources:
               - ${workspace.root_path}
               - "--env"
               - ${bundle.target}
-          libraries:
-           - whl: ./dist/*.whl
         - task_key: "train_model"
           job_cluster_key: "MLOps-compute"
           depends_on:
@@ -72,8 +70,6 @@ resources:
               - "{{job.id}}"
               - "--branch"
               - ${var.branch}
-          libraries:
-            - whl: ./dist/*.whl
         - task_key: model_updated
           condition_task:
             op: "EQUAL_TO"
@@ -93,8 +89,6 @@ resources:
               - ${workspace.root_path}
               - "--env"
               - ${bundle.target}
-          libraries:
-            - whl: ./dist/*.whl
 
 targets:
   dev:

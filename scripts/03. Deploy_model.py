@@ -45,9 +45,9 @@ endpoint_name = f"hotel_reservation_endpoint-{args.env}"
 
 # Initialize feature store manager
 feature_serving_manager = FeatureLookupServing(
-    model_name=f"{catalog_name}.{schema_name}.hotel_reservation_model_fe",
-    endpoint_name=endpoint_name,
-    feature_table_name=f"{catalog_name}.{schema_name}.hotel_reservation_features",
+    model_name=f"{config.catalog_name}.{config.schema_name}.hotel_reservation_model",
+    endpoint_name="hotel_reservation_endpoint",
+    feature_table_name=f"{config.catalog_name}.{config.schema_name}.hotel_reservation_features",
 )
 
 # Create online table
