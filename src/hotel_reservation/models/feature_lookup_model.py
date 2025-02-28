@@ -216,7 +216,7 @@ class FeatureLookUpModel:
         """Register the model with MLflow."""
         registered_model = mlflow.register_model(
             model_uri=f"runs:/{self.run_id}/HistGradientBoostingClassifier-model-fe",
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model",
             tags=self.tags,
         )
 
@@ -225,7 +225,7 @@ class FeatureLookUpModel:
 
         client = MlflowClient()
         client.set_registered_model_alias(
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_reservation_model",
             alias="latest-model",
             version=latest_version,
         )
@@ -236,7 +236,7 @@ class FeatureLookUpModel:
         Args:
             X (pyspark.sql.DataFrame): The input DataFrame.
         """
-        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.hotel_reservation_model_fe@latest-model"
+        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.hotel_reservation_model@latest-model"
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         return predictions

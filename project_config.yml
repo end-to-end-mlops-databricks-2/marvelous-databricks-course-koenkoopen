@@ -2,7 +2,7 @@ parameters:
   min_samples_leaf: 1
   learning_rate: 0.1
 
-experiment_name_fe: /Shared/house-prices-fe
+experiment_name_fe: /Shared/hotel-reservations-fe
 
 num_features:
   - no_of_adults
