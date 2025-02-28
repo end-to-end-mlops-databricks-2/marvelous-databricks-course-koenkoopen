@@ -1,5 +1,6 @@
 """Module with data preprocessing functions."""
 
+import time
 from typing import Tuple
 
 import numpy as np
@@ -169,3 +170,55 @@ class DataProcessor:
         except Exception as e:
             logger.error(f"Unexpected error occurred while saving to Databricks tables: {e}")
             raise Exception(f"Unexpected error occurred while saving to Databricks tables: {e}") from e
+
+    def enable_change_data_feed(self):
+        self.spark.sql(
+            f"ALTER TABLE {self.config.catalog_name}.{self.config.schema_name}.train_dataset "
+            "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
+        )
+
+        self.spark.sql(
+            f"ALTER TABLE {self.config.catalog_name}.{self.config.schema_name}.test_dataset "
+            "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
+        )
+
+
+def generate_synthetic_data(df, config, num_rows=10):
+    """Generates synthetic data based on the distribution of the input DataFrame."""
+    synthetic_data = pd.DataFrame()
+
+    for column in df.columns:
+        if column == "Booking_ID":
+            continue
+
+        if pd.api.types.is_numeric_dtype(df[column]):
+            if column in {"YearBuilt", "YearRemodAdd"}:  # Handle year-based columns separately
+                synthetic_data[column] = np.random.randint(df[column].min(), df[column].max() + 1, num_rows)
+            else:
+                synthetic_data[column] = np.random.normal(df[column].mean(), df[column].std(), num_rows)
+
+        elif pd.api.types.is_categorical_dtype(df[column]) or pd.api.types.is_object_dtype(df[column]):
+            synthetic_data[column] = np.random.choice(
+                df[column].unique(), num_rows, p=df[column].value_counts(normalize=True)
+            )
+
+        elif pd.api.types.is_datetime64_any_dtype(df[column]):
+            min_date, max_date = df[column].min(), df[column].max()
+            synthetic_data[column] = pd.to_datetime(
+                np.random.randint(min_date.value, max_date.value, num_rows)
+                if min_date < max_date
+                else [min_date] * num_rows
+            )
+
+        else:
+            synthetic_data[column] = np.random.choice(df[column], num_rows)
+
+    # Convert relevant numeric columns to integers
+    int_columns = config.num_features
+    for col in int_columns.intersection(df.columns):
+        synthetic_data[col] = synthetic_data[col].astype(np.int32)
+
+    timestamp_base = int(time.time() * 1000)
+    synthetic_data["Booking_ID"] = [str(timestamp_base + i) for i in range(num_rows)]
+
+    return synthetic_data
