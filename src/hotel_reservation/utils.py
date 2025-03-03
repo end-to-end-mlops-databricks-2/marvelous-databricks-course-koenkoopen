@@ -4,8 +4,6 @@ import logging
 import os
 import sys
 
-from sklearn.base import BaseEstimator, TransformerMixin
-
 
 def configure_logging(name, log_file_path=None):
     """Configures the logging module for a given module.
