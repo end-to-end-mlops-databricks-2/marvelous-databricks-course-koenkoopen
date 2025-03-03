@@ -13,8 +13,8 @@ resources:
           new_cluster:
             spark_version: "15.4.x-scala2.12"
             data_security_mode: "SINGLE_USER"
-            node_type_id: "r3.xlarge"
-            driver_node_type_id: "r3.xlarge"
+            node_type_id: "Standard_D8pds_v6"
+            driver_node_type_id: "Standard_D8pds_v6"
             autoscale:
               min_workers: 1
               max_workers: 1
