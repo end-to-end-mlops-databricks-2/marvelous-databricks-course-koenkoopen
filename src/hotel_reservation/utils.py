@@ -7,25 +7,6 @@ import sys
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-class DropColumnsTransformer(BaseEstimator, TransformerMixin):
-    """Transformer class to drop columns in sklearn pipeline."""
-
-    def __init__(self, columns_to_drop):
-        self.columns_to_drop = columns_to_drop
-
-    def fit(self, X, y=None):
-        """Fit the transformer."""
-        # No fitting needed for dropping columns, just return self
-        return self
-
-    def transform(self, X):
-        """Transform the input DataFrame by dropping the specified columns."""
-        # Drop the specified columns and return the transformed DataFrame
-        X_copy = X.copy()
-        X_copy.drop(columns=self.columns_to_drop, inplace=True)
-        return X_copy
-
-
 def configure_logging(name, log_file_path=None):
     """Configures the logging module for a given module.
 

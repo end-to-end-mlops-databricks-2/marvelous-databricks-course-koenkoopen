@@ -16,7 +16,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
 from src.hotel_reservation.config import ProjectConfig, Tags
-from src.hotel_reservation.utils import DropColumnsTransformer, configure_logging
+from src.hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
 
@@ -161,11 +161,6 @@ class FeatureLookUpModel:
                 ("cat", OneHotEncoder(handle_unknown="ignore"), self.config.one_hot_encode_cols),
                 ("num", MinMaxScaler(), self.num_features),
                 ("log", log_transformer, self.num_features),
-                (
-                    "drop",
-                    DropColumnsTransformer(columns_to_drop=self.config.columns_to_drop),
-                    self.config.columns_to_drop,
-                ),
             ],
             remainder="passthrough",
         )
@@ -197,15 +192,9 @@ class FeatureLookUpModel:
 
             signature = infer_signature(self.X_train, y_pred)
 
-            mlflow.sklearn.log_model(
-                HotelReservationModelWrapper(pipeline),
-                "HistGradientBoostingClassifier-model-fe",
-                signature=signature,
-            )
-
             self.fe.log_model(
                 model=HotelReservationModelWrapper(pipeline),
-                flavor=mlflow.sklearn,
+                flavor=mlflow.pyfunc,
                 artifact_path="HistGradientBoostingClassifier-model-fe",
                 training_set=self.training_set,
                 signature=signature,
