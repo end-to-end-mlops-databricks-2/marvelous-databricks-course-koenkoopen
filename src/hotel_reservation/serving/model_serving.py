@@ -5,60 +5,36 @@ import os
 import mlflow
 import requests
 from databricks.sdk import WorkspaceClient
-from databricks.sdk.service.catalog import (
-    OnlineTableSpec,
-    OnlineTableSpecTriggeredSchedulingPolicy,
-)
 from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
 
-from src.hotel_reservation.utils import configure_logging
+from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations Feature Serving.")
 
 
-class FeatureLookupServing:
-    """Class for feature lookup serving."""
-
-    def __init__(self, model_name: str, endpoint_name: str, feature_table_name: str):
-        """Initializes the Feature Lookup Serving Manager."""
-
+class ModelServing:
+    def __init__(self, model_name: str, endpoint_name: str):
+        """
+        Initializes the Model Serving Manager.
+        """
         self.workspace = WorkspaceClient()
-        self.feature_table_name = feature_table_name
-        self.online_table_name = f"{self.feature_table_name}_online"
-        self.model_name = model_name
         self.endpoint_name = endpoint_name
-
-    def create_online_table(self):
-        """Creates an online table for house features."""
-        spec = OnlineTableSpec(
-            primary_key_columns=["Booking_ID"],
-            source_table_full_name=self.feature_table_name,
-            run_triggered=OnlineTableSpecTriggeredSchedulingPolicy.from_dict({"triggered": "true"}),
-            perform_full_copy=False,
-        )
-        try:
-            self.workspace.online_tables.create(name=self.online_table_name, spec=spec)
-        except Exception:
-            logger.warning(f"Online table {self.online_table_name} already exists.")
+        self.model_name = model_name
 
     def get_latest_model_version(self):
-        """Returns the latest model version."""
         client = mlflow.MlflowClient()
         latest_version = client.get_model_version_by_alias(self.model_name, alias="latest-model").version
         print(f"Latest model version: {latest_version}")
-
         return latest_version
 
     def deploy_or_update_serving_endpoint(
         self, version: str = "latest", workload_size: str = "Small", scale_to_zero: bool = True
     ):
-        """Deploys the model serving endpoint in Databricks.
-
-        Args:
-            - version (str): Version of the model to deploy.
-            - workload_seze (str): Workload size (number of concurrent requests). Default is Small = 4 concurrent requests.
-
-            - scale_to_zero (bool): If True, endpoint scales to 0 when unused.
+        """
+        Deploys the model serving endpoint in Databricks.
+        :param version: str. Version of the model to deploy
+        :param workload_seze: str. Workload size (number of concurrent requests). Default is Small = 4 concurrent requests
+        :param scale_to_zero: bool. If True, endpoint scales to 0 when unused.
         """
         endpoint_exists = any(item.name == self.endpoint_name for item in self.workspace.serving_endpoints.list())
         if version == "latest":
