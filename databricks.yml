@@ -63,7 +63,7 @@ resources:
           depends_on:
             - task_key: "preprocessing"
           spark_python_task:
-            python_file: "scripts/02.train_register_fe_model.py"
+            python_file: "scripts/02.train_register_basic_model.py"
             parameters:
               - "--root_path"
               - ${workspace.root_path}
