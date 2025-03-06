@@ -22,7 +22,7 @@ logger = configure_logging("Hotel Reservations feature lookup")
 class BasicModel:
     """Class for feature lookup."""
 
-    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession, code_paths: list):
+    def __init__(self, config: ProjectConfig, tags: Tags, spark: SparkSession):
         """Initialize the FeatureLookUpModel class."""
         self.config = config
         self.spark = spark
@@ -142,6 +142,7 @@ class BasicModel:
             alias="latest-model",
             version=latest_version,
         )
+        return latest_version
 
     def load_latest_model_and_predict(self, X):
         """Load the trained model from MLflow using Feature Engineering Client and make predictions.
