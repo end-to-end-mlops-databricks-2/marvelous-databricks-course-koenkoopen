@@ -1,0 +1,27 @@
+channels:
+- conda-forge
+dependencies:
+- python=3.11.0
+- pip<=23.2.1
+- pip:
+  - mlflow==2.17.0
+  - cloudpickle==3.1.0
+  - mlflow==2.17.0
+  - cffi==1.17.1
+  - cloudpickle==3.1.0
+  - matplotlib==3.9.2
+  - numpy==1.26.4
+  - pandas==2.2.3
+  - psutil==6.0.0
+  - pyarrow==14.0.1
+  - pytest==8.3.4
+  - pytest-cov==6.0.0
+  - scikit-learn==1.5.2
+  - lightgbm==4.5.0
+  - scipy==1.14.1
+  - toml==0.10.2
+  - databricks-sdk==0.32.0
+  - pydantic==2.9.2
+  - databricks-feature-engineering==0.6
+  - /Volumes/koen_dev/gold_hotel_reservations/landingzone/hotel_reservation-0.0.42-py3-none-any.whl
+name: mlflow-env

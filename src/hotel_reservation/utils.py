@@ -4,8 +4,8 @@ import logging
 import os
 import sys
 
-import numpy as np
-import pandas as pd
+import toml
+from mlflow.pyfunc import get_default_conda_env
 
 
 def configure_logging(name, log_file_path=None):
@@ -52,17 +52,27 @@ def configure_logging(name, log_file_path=None):
     return logger
 
 
-def log_transform(df: pd.DataFrame, col_names: list) -> pd.DataFrame:
-    """Log transform column col_name in Pandas DataFrame df.
+def get_dependencies_from_pyproject(toml_file="pyproject.toml"):
+    # Load the pyproject.toml file
+    with open(toml_file, "r") as file:
+        data = toml.load(file)
 
-    Args:
-        df (pd.DataFrame): The Pandas DataFrame to transform.
-        col_name (list): A list of strings, each representing the name of the column to transform.
+    # Extract dependencies from the pyproject.toml file
+    dependencies = data.get("project", {}).get("dependencies", [])
 
-    Returns:
-        df: A new Pandas DataFrame with the transformed columns.
-    """
-    df_copy = df.copy()
-    for col in col_names:
-        df_copy[col] = np.log1p(df_copy[col])
-    return df_copy
+    return dependencies
+
+
+# Function to create a custom Conda environment from the dependencies
+def get_custom_conda_env(toml_file="pyproject.toml"):
+    # Get the default Conda environment
+    conda_env = get_default_conda_env()
+
+    # Read dependencies from pyproject.toml
+    dependencies = get_dependencies_from_pyproject(toml_file=toml_file)
+
+    # Add the dependencies to the Conda environment
+    for i in range(len(conda_env["dependencies"])):
+        if "pip" in conda_env["dependencies"][i] and isinstance(conda_env["dependencies"][i], dict):
+            conda_env["dependencies"][i]["pip"] += dependencies
+    return conda_env

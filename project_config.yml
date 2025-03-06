@@ -2,7 +2,7 @@ parameters:
   min_samples_leaf: 1
   learning_rate: 0.1
 
-experiment_name_fe: /Shared/house-prices-fe
+experiment_name_fe: /Shared/hotel-reservations-fe
 
 num_features:
   - no_of_adults
@@ -35,11 +35,6 @@ columns_to_drop:
   - arrival_year
   - arrival_date
   - arrival_month
-  - room_type_reserved_Room_Type 2
-  - room_type_reserved_Room_Type 3
-  - room_type_reserved_Room_Type 5
-  - type_of_meal_plan_Not Selected
-  - type_of_meal_plan_Meal Plan 3
 
 features_used:
   - no_of_adults
