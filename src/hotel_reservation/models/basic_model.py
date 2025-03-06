@@ -2,9 +2,7 @@
 
 import mlflow
 import numpy as np
-import pandas as pd
 from databricks import feature_engineering
-from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
@@ -16,7 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler, OneHotEncoder
 
 from hotel_reservation.config import ProjectConfig, Tags
-from hotel_reservation.utils import configure_logging, get_custom_conda_env 
+from hotel_reservation.utils import configure_logging
 
 logger = configure_logging("Hotel Reservations feature lookup")
 
@@ -84,9 +82,7 @@ class BasicModel:
             learning_rate=self.parameters["learning_rate"], min_samples_leaf=self.parameters["min_samples_leaf"]
         )
 
-        self.pipeline = Pipeline(
-            steps=[("preprocessor", self.preprocessor), ("classifier", gb_model)]
-        )
+        self.pipeline = Pipeline(steps=[("preprocessor", self.preprocessor), ("classifier", gb_model)])
         logger.info("✅ Preprocessing pipeline defined.")
 
     def train(self):
@@ -117,7 +113,7 @@ class BasicModel:
             mlflow.log_metric("r2_score", r2)
 
             signature = infer_signature(model_input=self.X_train, model_output=y_pred)
-            
+
             dataset = mlflow.data.from_spark(
                 self.train_set_spark,
                 table_name=f"{self.catalog_name}.{self.schema_name}.train_dataset",

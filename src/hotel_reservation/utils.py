@@ -3,12 +3,9 @@
 import logging
 import os
 import sys
+
 import toml
-
-import mlflow
 from mlflow.pyfunc import get_default_conda_env
-
-from sklearn.base import BaseEstimator, TransformerMixin
 
 
 def configure_logging(name, log_file_path=None):
@@ -55,18 +52,19 @@ def configure_logging(name, log_file_path=None):
     return logger
 
 
-def get_dependencies_from_pyproject(toml_file='pyproject.toml'):
+def get_dependencies_from_pyproject(toml_file="pyproject.toml"):
     # Load the pyproject.toml file
-    with open(toml_file, 'r') as file:
+    with open(toml_file, "r") as file:
         data = toml.load(file)
-    
+
     # Extract dependencies from the pyproject.toml file
-    dependencies = data.get('project', {}).get('dependencies', [])
-    
+    dependencies = data.get("project", {}).get("dependencies", [])
+
     return dependencies
 
+
 # Function to create a custom Conda environment from the dependencies
-def get_custom_conda_env(toml_file='pyproject.toml'):
+def get_custom_conda_env(toml_file="pyproject.toml"):
     # Get the default Conda environment
     conda_env = get_default_conda_env()
 
@@ -74,7 +72,7 @@ def get_custom_conda_env(toml_file='pyproject.toml'):
     dependencies = get_dependencies_from_pyproject(toml_file=toml_file)
 
     # Add the dependencies to the Conda environment
-    for i in range(len(conda_env['dependencies'])):
-        if 'pip' in conda_env['dependencies'][i] and isinstance(conda_env['dependencies'][i], dict):
-            conda_env['dependencies'][i]['pip'] += dependencies
+    for i in range(len(conda_env["dependencies"])):
+        if "pip" in conda_env["dependencies"][i] and isinstance(conda_env["dependencies"][i], dict):
+            conda_env["dependencies"][i]["pip"] += dependencies
     return conda_env
