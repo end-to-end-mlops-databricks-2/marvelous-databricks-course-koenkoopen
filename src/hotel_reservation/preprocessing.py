@@ -183,8 +183,18 @@ class DataProcessor:
         )
 
 
-def generate_synthetic_data(df, config, num_rows=10):
-    """Generates synthetic data based on the distribution of the input DataFrame."""
+def generate_synthetic_data(df, config, drift=False, num_rows=10):
+    """Generates synthetic data based on the distribution of the input DataFrame.
+
+    Args:
+        df (pandas.DataFrame): The input DataFrame.
+        config (ProjectConfig): The configuration object.
+        drift (bool, optional): Whether to apply drift to the synthetic data. Defaults to False.
+        num_rows (int, optional): The number of rows to generate. Defaults to 10.
+
+    Returns:
+        pandas.DataFrame: The generated synthetic data.
+    """
     synthetic_data = pd.DataFrame()
 
     for column in df.columns:
@@ -192,7 +202,7 @@ def generate_synthetic_data(df, config, num_rows=10):
             continue
 
         if pd.api.types.is_numeric_dtype(df[column]):
-            if column in {"YearBuilt", "YearRemodAdd"}:  # Handle year-based columns separately
+            if column in {"arrival_year"}:  # Handle year-based columns separately
                 synthetic_data[column] = np.random.randint(df[column].min(), df[column].max() + 1, num_rows)
             else:
                 synthetic_data[column] = np.random.normal(df[column].mean(), df[column].std(), num_rows)
@@ -220,5 +230,17 @@ def generate_synthetic_data(df, config, num_rows=10):
 
     timestamp_base = int(time.time() * 1000)
     synthetic_data["Booking_ID"] = [str(timestamp_base + i) for i in range(num_rows)]
+
+    if drift:
+        # Skew the top features to introduce drift
+        top_features = ["no_of_adults", "no_of_children"]  # Select top 2 features
+        for feature in top_features:
+            if feature in synthetic_data.columns:
+                synthetic_data[feature] = synthetic_data[feature] * 2
+
+        # Set YearBuilt to within the last 2 years
+        current_year = pd.Timestamp.now().year
+        if "YearBuilt" in synthetic_data.columns:
+            synthetic_data["YearBuilt"] = np.random.randint(current_year - 2, current_year + 1, num_rows)
 
     return synthetic_data
