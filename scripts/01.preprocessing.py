@@ -44,7 +44,7 @@ spark.sql("USE gold_hotel_reservations")
 df = spark.sql("SELECT * FROM hotel_reservations")
 
 # Initialize DataProcessor
-data_processor = DataProcessor(df, config)
+data_processor = DataProcessor(df, config, spark)
 data_processor.preprocess()
 
 df_train, df_test = data_processor.split_data()

@@ -17,6 +17,7 @@ class ProjectConfig(BaseModel):
     target: str
     catalog_name: str
     schema_name: str
+    pipeline_id: str
     parameters: Dict[str, Any]  # Dictionary to hold model-related parameters
     experiment_name_fe: Optional[str]
 

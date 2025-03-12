@@ -10,7 +10,7 @@ from pyspark.sql.types import ArrayType, DoubleType, IntegerType, StringType, St
 
 def create_or_refresh_monitoring(config, spark, workspace):
     inf_table = spark.sql(
-        f"SELECT * FROM {config.catalog_name}.{config.schema_name}.`hotel_reservation_endpoint_payload`"
+        f"SELECT * FROM {config.catalog_name}.{config.schema_name}.`hotel_reservation_endp_payload`"
     )
 
     request_schema = StructType(
@@ -89,7 +89,6 @@ def create_or_refresh_monitoring(config, spark, workspace):
         F.col("record.no_of_previous_bookings_not_canceled").alias("no_of_previous_bookings_not_canceled"),
         F.col("record.avg_price_per_room").alias("avg_price_per_room"),
         F.col("record.no_of_special_requests").alias("no_of_special_requests"),
-        F.col("record.booking_status").alias("booking_status"),
         F.col("parsed_response.predictions")[0].alias("prediction"),
         F.lit("hotel-reservations-fe").alias("model_name"),
     )
@@ -111,15 +110,17 @@ def create_or_refresh_monitoring(config, spark, workspace):
         .dropna(subset=["booking_status", "prediction"])
     )
 
-    hotel_features = spark.table(f"{config.catalog_name}.{config.schema_name}.hotel_reservation_features")
+    # hotel_features = spark.table(f"{config.catalog_name}.{config.schema_name}.hotel_reservations")
 
-    df_final_with_features = df_final_with_status.join(hotel_features, on="Booking_ID", how="left")
+    # df_final_with_features = df_final_with_status.join(hotel_features, on="Booking_ID", how="left")
 
-    df_final_with_features = df_final_with_features.withColumn(
-        "avg_price_per_room", F.col("avg_price_per_room").cast("double")
-    )
+    # df_final_with_features = df_final_with_features.withColumn(
+    #     "avg_price_per_room", F.col("avg_price_per_room").cast("double")
+    # )
 
-    df_final_with_features.write.format("delta").mode("append").saveAsTable(
+    logger.info(f"df_final_with_features columns: {df_final_with_status.toPandas().columns}")
+
+    df_final_with_status.write.format("delta").mode("append").saveAsTable(
         f"{config.catalog_name}.{config.schema_name}.model_monitoring"
     )
 

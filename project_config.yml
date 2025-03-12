@@ -1,15 +1,15 @@
 prd:
   catalog_name: koen_prd
   schema_name: gold_hotel_reservations
-  pipeline_id:
+  pipeline_id: 717e1b9d-f330-4912-aef2-7677be4a164e
 acc:
   catalog_name: koen_acc
   schema_name: gold_hotel_reservations
-  pipeline_id:
+  pipeline_id: 717e1b9d-f330-4912-aef2-7677be4a164e
 dev:
   catalog_name: koen_dev
   schema_name: gold_hotel_reservations
-  pipeline_id:
+  pipeline_id: 717e1b9d-f330-4912-aef2-7677be4a164e
 
 parameters:
   min_samples_leaf: 1
@@ -77,3 +77,4 @@ target: booking_status
 
 catalog_name: "koen_dev"
 schema_name: "gold_hotel_reservations"
+pipeline_id: 717e1b9d-f330-4912-aef2-7677be4a164e

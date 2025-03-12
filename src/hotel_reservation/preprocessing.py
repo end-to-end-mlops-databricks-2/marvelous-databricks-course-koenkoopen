@@ -19,7 +19,7 @@ logger = configure_logging("Hotel Reservations")
 class DataProcessor:
     """Class for data preprocessing."""
 
-    def __init__(self, spark_df: pd.DataFrame, config: ProjectConfig):
+    def __init__(self, spark_df: pd.DataFrame, config: ProjectConfig, spark: SparkSession):
         """Initialize the DataProcessor class.
 
         Args:
@@ -28,6 +28,7 @@ class DataProcessor:
         """
         self.df = spark_df.toPandas()  # Store the DataFrame as self.df
         self.config = config  # Store the configuration
+        self.spark = spark
         logger.info("DataProcessor initialized")
 
     def preprocess(self):
@@ -225,7 +226,7 @@ def generate_synthetic_data(df, config, drift=False, num_rows=10):
 
     # Convert relevant numeric columns to integers
     int_columns = config.num_features
-    for col in int_columns.intersection(df.columns):
+    for col in df.columns.intersection(int_columns):
         synthetic_data[col] = synthetic_data[col].astype(np.int32)
 
     timestamp_base = int(time.time() * 1000)
@@ -233,14 +234,14 @@ def generate_synthetic_data(df, config, drift=False, num_rows=10):
 
     if drift:
         # Skew the top features to introduce drift
-        top_features = ["no_of_adults", "no_of_children"]  # Select top 2 features
+        top_features = ["lead_time", "avg_price_per_room"]  # Select top 2 features
         for feature in top_features:
             if feature in synthetic_data.columns:
                 synthetic_data[feature] = synthetic_data[feature] * 2
 
         # Set YearBuilt to within the last 2 years
         current_year = pd.Timestamp.now().year
-        if "YearBuilt" in synthetic_data.columns:
-            synthetic_data["YearBuilt"] = np.random.randint(current_year - 2, current_year + 1, num_rows)
+        if "arrival_year" in synthetic_data.columns:
+            synthetic_data["arrival_year"] = np.random.randint(current_year - 2, current_year + 1, num_rows)
 
     return synthetic_data
